@@ -6,12 +6,14 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
-// Champs facultatifs : TinaCMS peut écrire null ou omettre un champ vidé.
+// Champs facultatifs : l'espace d'édition (Pages CMS, auparavant TinaCMS) peut écrire "", null ou omettre un champ vidé.
+const vide = (v: unknown) => (v === '' || v === null ? undefined : v);
 const txt = z.string().nullish();
+const choix = <const T extends [string, ...string[]]>(valeurs: T) => z.preprocess(vide, z.enum(valeurs).optional());
 const liste = <T extends z.ZodType>(t: T) => z.array(t).nullish().transform((v) => v ?? []);
 const lien = z.object({ libelle: txt, url: txt }).nullish();
-const bouton = z.object({ libelle: txt, url: txt, style: z.enum(['primaire', 'secondaire', 'clair']).nullish() });
-const fond = z.enum(['blanc', 'gris', 'bleu', 'sombre']).nullish();
+const bouton = z.object({ libelle: txt, url: txt, style: choix(['primaire', 'secondaire', 'clair']) });
+const fond = choix(['blanc', 'gris', 'bleu', 'sombre']);
 const commun = { ancre: txt, fond };
 
 const sections = z.discriminatedUnion('_template', [
@@ -41,8 +43,8 @@ const sections = z.discriminatedUnion('_template', [
     surtitre: txt,
     titre: txt,
     texte: txt,
-    style: z.enum(['simples', 'numerotees', 'etapes', 'pastel', 'etiquettes']).nullish(),
-    colonnes: z.number().int().min(1).max(4).nullish(),
+    style: choix(['simples', 'numerotees', 'etapes', 'pastel', 'etiquettes']),
+    colonnes: z.preprocess(vide, z.number().int().min(1).max(4).optional()),
     cartes: liste(z.object({ surtitre: txt, titre: txt, texte: txt, liste: liste(z.string()), lien })),
     note: txt,
     appel: z.object({ texte: txt, bouton: bouton.nullish() }).nullish(),
@@ -76,7 +78,7 @@ const sections = z.discriminatedUnion('_template', [
     titre: txt,
     texte: txt,
     lien,
-    affichage: z.enum(['resume', 'detail']).nullish(),
+    affichage: choix(['resume', 'detail']),
   }),
   z.object({
     _template: z.literal('faq'),
@@ -104,13 +106,13 @@ const sections = z.discriminatedUnion('_template', [
     ...commun,
     titre: txt,
     texte: txt,
-    format: z.enum(['grand', 'petit']).nullish(),
+    format: choix(['grand', 'petit']),
     partenaires: liste(z.object({ nom: z.string(), texte: txt, logo: txt, lien })),
   }),
   z.object({
     _template: z.literal('encart'),
     ...commun,
-    couleur: z.enum(['blanc', 'vert', 'bleu']).nullish(),
+    couleur: choix(['blanc', 'vert', 'bleu']),
     document: z.boolean().nullish(),
     surtitre: txt,
     titre: z.string(),
@@ -147,9 +149,9 @@ const pages = defineCollection({
   schema: z.object({
     titre: z.string(),
     description: z.string(),
-    menu: z.string().optional(), // libellé dans le menu (absent = pas dans le menu)
-    ordre: z.number().default(50),
-    formulaire: z.boolean().default(false), // affiche le formulaire de contact sous le contenu
+    menu: z.preprocess(vide, z.string().optional()), // libellé dans le menu (absent = pas dans le menu)
+    ordre: z.preprocess(vide, z.number().default(50)),
+    formulaire: z.preprocess(vide, z.boolean().default(false)), // affiche le formulaire de contact sous le contenu
     sections: liste(sections),
   }),
 });
@@ -190,7 +192,7 @@ const articles = defineCollection({
     titre: z.string(),
     description: z.string(),
     date: z.coerce.date(),
-    motCle: z.string().optional(), // requête principale visée (agent seo-contenu)
+    motCle: z.preprocess(vide, z.string().optional()), // requête principale visée (agent seo-contenu)
   }),
 });
 

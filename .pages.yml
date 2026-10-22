@@ -1,0 +1,439 @@
+# Espace d'édition du client : Pages CMS (https://app.pagescms.org), application en ligne gratuite et open source (MIT).
+# Le client, invité par e-mail (sans compte GitHub), modifie les fichiers de content/ ; chaque enregistrement est un
+# commit sur main, qui relance la CI (contrôle, build, envoi FTP).
+# Ce fichier doit suivre src/content.config.ts (sections : src/components/sections/). Les sections gardent la clé
+# `_template` de leurs fichiers (blockKey).
+# Documentation : https://pagescms.org/docs/configuration/
+
+media:
+  input: public/images
+  output: /images
+  rename: safe
+  categories: [image]
+
+settings:
+  content:
+    # Garde dans le fichier les champs absents de ce schéma au lieu de les effacer à l'enregistrement.
+    merge: true
+  commit:
+    # Nom et e-mail de l'éditeur dans chaque commit (traçabilité des modifications du client).
+    identity: user
+    templates:
+      create: "Contenu : création de {path} par {userName} (Pages CMS)"
+      update: "Contenu : modification de {path} par {userName} (Pages CMS)"
+      delete: "Contenu : suppression de {path} par {userName} (Pages CMS)"
+      rename: "Contenu : {oldPath} renommé en {newPath} par {userName} (Pages CMS)"
+
+components:
+  multiligne:
+    type: text
+    description: "**gras**, [lien](https://…) ; ligne vide = nouveau paragraphe ; « - » en début de ligne = liste"
+  lien:
+    type: object
+    label: Lien
+    fields:
+      - { name: libelle, label: Libellé, type: string }
+      - { name: url, label: "Adresse (/page/, https://…, ou un numéro de téléphone)", type: string }
+  bouton:
+    type: object
+    label: Bouton
+    fields:
+      - { name: libelle, label: Libellé, type: string }
+      - { name: url, label: "Adresse (/page/, https://…, ou un numéro de téléphone)", type: string }
+      - name: style
+        label: Style
+        type: select
+        options:
+          values:
+            - { name: primaire, label: Plein }
+            - { name: secondaire, label: Contour }
+            - { name: clair, label: Blanc }
+  ancre:
+    type: string
+    label: "Ancre (#…) pour le sommaire, ex. faq"
+  fond:
+    type: select
+    label: Fond
+    options:
+      values:
+        - { name: blanc, label: Blanc }
+        - { name: gris, label: Gris clair }
+        - { name: bleu, label: Bleu clair }
+        - { name: sombre, label: Bleu nuit }
+  encadre:
+    type: object
+    label: Encadré
+    fields:
+      - { name: titre, label: Titre, type: string }
+      - { name: texte, label: Texte, component: multiligne }
+
+content:
+  # Un dossier par langue (fr/, en/…) : le même nom de fichier dans chaque dossier = même page traduite.
+  - name: pages
+    label: Pages
+    type: collection
+    path: content/pages
+    subfolders: true
+    # Le nombre de pages dépend du forfait, et le nom du fichier donne l'adresse : ni création, ni renommage, ni suppression.
+    operations: { create: false, rename: false, delete: false }
+    view:
+      primary: titre
+      fields: [titre, menu, ordre]
+      sort: [ordre, titre]
+      default: { sort: ordre, order: asc }
+    fields:
+      - { name: titre, label: Titre, type: string, required: true }
+      - name: description
+        label: Description (résultats Google, 150 caractères environ)
+        type: text
+        required: true
+        options: { maxlength: 200 }
+      - { name: menu, label: Libellé dans le menu, description: "Vide = la page n'apparaît pas dans le menu.", type: string }
+      - { name: ordre, label: Ordre dans le menu, type: number, options: { min: 0 } }
+      - { name: formulaire, label: Afficher le formulaire de contact, type: boolean }
+      - name: sections
+        label: Sections de la page
+        type: block
+        blockKey: _template
+        list:
+          collapsible: { collapsed: true, summary: "{index}. {titre}" }
+        blocks:
+          - name: accroche
+            label: Accroche (accueil)
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: surtitre, label: Surtitre, type: string }
+              - { name: titre, label: Titre principal (H1), type: string, required: true }
+              - { name: texte, label: Texte, component: multiligne }
+              - { name: boutons, label: Boutons, component: bouton, list: true }
+              - { name: puces, label: Points forts, type: string, list: true }
+              - { name: image, label: Photo, type: image }
+              - { name: imageAlt, label: Description de la photo (accessibilité), type: string }
+              - { name: consignePhoto, label: "Photo à fournir (consigne affichée tant qu'il n'y a pas de photo)", type: string }
+              - name: encart
+                label: Encart sur la photo
+                type: object
+                fields:
+                  - { name: surtitre, label: Surtitre, type: string }
+                  - { name: texte, label: Texte, component: multiligne }
+                  - { name: telephone, label: Téléphone, type: string }
+          - name: bandeau
+            label: Bandeau de page (titre H1)
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: Titre principal (H1), type: string, required: true }
+              - { name: texte, label: Introduction, component: multiligne }
+              - name: sommaire
+                label: Sommaire
+                type: object
+                list: true
+                fields:
+                  - { name: libelle, label: Libellé, type: string, required: true }
+                  - { name: ancre, label: Ancre de la section visée, type: string, required: true }
+          - name: cartes
+            label: Cartes
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: surtitre, label: Surtitre, type: string }
+              - { name: titre, label: Titre, type: string }
+              - { name: texte, label: Introduction, component: multiligne }
+              - name: style
+                label: Style
+                type: select
+                options:
+                  values:
+                    - { name: simples, label: Simples }
+                    - { name: numerotees, label: "Numérotées (01, 02…)" }
+                    - { name: etapes, label: Étapes }
+                    - { name: pastel, label: Couleurs pastel }
+                    - { name: etiquettes, label: Étiquettes (titre seul) }
+              - { name: colonnes, label: Colonnes (1 à 4), type: number, options: { min: 1, max: 4 } }
+              - name: cartes
+                label: Cartes
+                type: object
+                list:
+                  collapsible: { collapsed: true, summary: "{titre}" }
+                fields:
+                  - { name: surtitre, label: Surtitre, type: string }
+                  - { name: titre, label: Titre, type: string }
+                  - { name: texte, label: Texte, component: multiligne }
+                  - { name: liste, label: Liste à puces, type: string, list: true }
+                  - { name: lien, component: lien }
+              - { name: note, label: Note sous les cartes, component: multiligne }
+              - name: appel
+                label: Bandeau d'appel sous les cartes
+                type: object
+                fields:
+                  - { name: texte, label: Texte, type: string }
+                  - { name: bouton, component: bouton }
+          - name: colonnes
+            label: Deux colonnes
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: surtitre, label: Surtitre, type: string }
+              - { name: titre, label: Titre, type: string, required: true }
+              - { name: sousTitre, label: Sous-titre, type: string }
+              - { name: texte, label: Texte, component: multiligne }
+              - { name: encadre, component: encadre }
+              - { name: lien, component: lien }
+              - { name: image, label: Photo, type: image }
+              - { name: imageAlt, label: Description de la photo (accessibilité), type: string }
+              - { name: consignePhoto, label: "Photo à fournir (consigne affichée tant qu'il n'y a pas de photo)", type: string }
+              - { name: texteDroite, label: Texte à droite, component: multiligne }
+              - name: listes
+                label: Listes à droite
+                type: object
+                list: true
+                fields:
+                  - { name: titre, label: Titre, type: string }
+                  - { name: coches, label: Puces en coches, type: boolean }
+                  - { name: items, label: Éléments, type: string, list: true }
+              - { name: noteDroite, label: Note à droite, component: multiligne }
+          - name: chiffres
+            label: Repères (fond sombre)
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: Titre, type: string }
+              - name: chiffres
+                label: Repères
+                type: object
+                list: true
+                fields:
+                  - { name: valeur, label: Valeur ou mot, type: string, required: true }
+                  - { name: texte, label: Texte, type: string }
+              - { name: bouton, component: bouton }
+          - name: lieux
+            label: "Lieux d'accueil (modifiables dans « Réglages du site »)"
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: Titre, type: string }
+              - { name: texte, label: Introduction, component: multiligne }
+              - { name: lien, component: lien }
+              - name: affichage
+                label: Affichage
+                type: select
+                options:
+                  values:
+                    - { name: resume, label: Résumé }
+                    - { name: detail, label: "Détaillé (adresse, horaires, itinéraire)" }
+          - name: faq
+            label: Questions fréquentes
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: Titre, type: string }
+              - { name: texte, label: Introduction, component: multiligne }
+              - name: questions
+                label: Questions
+                type: object
+                list:
+                  collapsible: { collapsed: true, summary: "{question}" }
+                fields:
+                  - { name: question, label: Question, type: string, required: true }
+                  - { name: reponse, label: Réponse, component: multiligne }
+          - name: liens
+            label: Numéros et liens utiles
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: Titre, type: string }
+              - name: liens
+                label: Liens
+                type: object
+                list: true
+                fields:
+                  - { name: valeur, label: Numéro ou intitulé, type: string, required: true }
+                  - { name: texte, label: Description, type: string }
+                  - { name: url, label: "Adresse (vide = appeler le numéro)", type: string }
+              - { name: note, label: Note, component: multiligne }
+          - name: equipe
+            label: Équipe / bureau
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: Titre, type: string }
+              - { name: texte, label: Introduction, component: multiligne }
+              - name: membres
+                label: Membres
+                type: object
+                list:
+                  collapsible: { collapsed: true, summary: "{nom}" }
+                fields:
+                  - { name: fonction, label: Fonction, type: string }
+                  - { name: nom, label: Nom, type: string, required: true }
+                  - { name: description, label: Description, type: string }
+                  - { name: photo, label: Photo, type: image }
+          - name: partenaires
+            label: Partenaires
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: Titre, type: string }
+              - { name: texte, label: Introduction, component: multiligne }
+              - name: format
+                label: Format
+                type: select
+                options:
+                  values:
+                    - { name: grand, label: Grandes cartes }
+                    - { name: petit, label: Vignettes }
+              - name: partenaires
+                label: Partenaires
+                type: object
+                list:
+                  collapsible: { collapsed: true, summary: "{nom}" }
+                fields:
+                  - { name: nom, label: Nom, type: string, required: true }
+                  - { name: texte, label: Texte, component: multiligne }
+                  - { name: logo, label: Logo, type: image }
+                  - { name: lien, component: lien }
+          - name: encart
+            label: Encart
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - name: couleur
+                label: Couleur
+                type: select
+                options:
+                  values:
+                    - { name: blanc, label: Blanc }
+                    - { name: vert, label: Vert clair }
+                    - { name: bleu, label: Bleu clair }
+              - { name: document, label: Icône document (PDF), type: boolean }
+              - { name: surtitre, label: Surtitre, type: string }
+              - { name: titre, label: Titre, type: string, required: true }
+              - { name: texte, label: Texte, component: multiligne }
+              - { name: bouton, component: bouton }
+              - { name: aside, label: "Bloc d'information à droite (remplace le bouton)", component: encadre }
+          - name: formulaire
+            label: Formulaire de contact
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: Titre, type: string }
+              - { name: texte, label: Texte, component: multiligne }
+              - { name: encadre, component: encadre }
+          - name: appel
+            label: "Appel « Vous avez besoin d'aide ? » (modifiable dans « Réglages du site »)"
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: "Titre (vide = celui des réglages)", type: string }
+              - { name: texte, label: "Texte (vide = celui des réglages)", component: multiligne }
+          - name: texte
+            label: Texte libre
+            fields:
+              - { name: ancre, component: ancre }
+              - { name: fond, component: fond }
+              - { name: titre, label: Titre, type: string }
+              - { name: texte, label: Texte, component: multiligne }
+      - name: body
+        label: Contenu libre (sous les sections)
+        type: rich-text
+        options: { format: markdown }
+
+  # Réglages communs à toutes les pages d'une langue : un fichier par langue (fr.md, en.md…).
+  - name: reglages
+    label: Réglages du site (en-tête, lieux, pied de page)
+    type: collection
+    path: content/reglages
+    operations: { create: false, rename: false, delete: false }
+    fields:
+      - name: bandeau
+        label: Bandeau d'urgence
+        type: object
+        fields:
+          - { name: texte, label: Texte, type: string }
+          - { name: urgence, label: "Numéros d'urgence ([17](tel:17))", type: string }
+          - { name: quitter, label: "Bouton « Quitter le site »", component: lien }
+      - name: logo
+        label: Logo
+        type: object
+        fields:
+          - { name: sigle, label: "Sigle (si pas d'image)", type: string }
+          - { name: nom, label: Nom, type: string, required: true }
+          - { name: sousTitre, label: Sous-titre, type: string }
+          - { name: image, label: Image du logo, type: image }
+      - { name: telephone, label: "Téléphone du bouton d'appel (en-tête)", type: string }
+      - name: lieux
+        label: Lieux d'accueil
+        type: object
+        list:
+          collapsible: { collapsed: true, summary: "{nom}" }
+        fields:
+          - { name: nom, label: Nom, type: string, required: true }
+          - { name: batiment, label: Bâtiment, type: string }
+          - { name: adresse, label: "Adresse (vide = permanence sans adresse)", type: string }
+          - { name: telephones, label: Téléphones, type: string, list: true }
+          - { name: email, label: E-mail, type: string }
+          - { name: horaires, label: Horaires d'ouverture, component: multiligne }
+          - { name: itineraire, label: "Lien itinéraire (Google Maps…)", type: string }
+          - { name: description, label: Description, component: multiligne }
+          - { name: rendezVous, label: Bouton de rendez-vous, component: lien }
+      - name: appel
+        label: Appel de fin de page
+        type: object
+        fields:
+          - { name: titre, label: Titre, type: string, required: true }
+          - { name: texte, label: Texte, component: multiligne }
+          - name: boutons
+            label: Boutons
+            type: object
+            list: true
+            fields:
+              - { name: libelle, label: Libellé, type: string, required: true }
+              - { name: url, label: Adresse ou numéro, type: string, required: true }
+      - name: pied
+        label: Pied de page
+        type: object
+        fields:
+          - { name: presentation, label: Présentation, component: multiligne }
+          - name: contacts
+            label: Contacts
+            type: object
+            list: true
+            fields:
+              - { name: libelle, label: Libellé, type: string, required: true }
+              - { name: url, label: Adresse ou numéro, type: string, required: true }
+          - { name: titreLogos, label: Titre des logos, type: string }
+          - name: logos
+            label: Logos
+            type: object
+            list: true
+            fields:
+              - { name: nom, label: Nom, type: string, required: true }
+              - { name: image, label: Logo, type: image }
+              - { name: url, label: Lien, type: string }
+
+  # Articles : créer l'article dans le dossier de sa langue (fr/…) ; le nom du fichier donne l'adresse.
+  - name: articles
+    label: Articles
+    type: collection
+    path: content/articles
+    subfolders: true
+    exclude: [.gitkeep]
+    filename: { template: "{titre}.md", field: create }
+    # Renommer changerait l'adresse de l'article (liens et référencement perdus).
+    operations: { rename: false }
+    view:
+      primary: titre
+      fields: [titre, date]
+      sort: [date, titre]
+      default: { sort: date, order: desc }
+    fields:
+      - { name: titre, label: Titre, type: string, required: true }
+      - name: description
+        label: Description (résultats Google, 150 caractères environ)
+        type: text
+        required: true
+        options: { maxlength: 200 }
+      - { name: date, label: Date de publication, type: date, required: true, options: { format: yyyy-MM-dd } }
+      - { name: motCle, label: Mot-clé principal visé, description: Rempli par Moyo pour les articles SEO., type: string }
+      - { name: body, label: Contenu, type: rich-text, options: { format: markdown } }
