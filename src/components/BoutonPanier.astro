@@ -1,0 +1,26 @@
+---
+// Bouton « Ajouter au panier » Snipcart. Les attributs doivent rester dans le HTML statique : le robot de Snipcart
+// relit la page data-item-url (sans exécuter de JavaScript) pour vérifier le prix de chaque commande.
+import type { CollectionEntry } from 'astro:content';
+import { decouper, urlProduit } from '../moyo/site';
+import { t } from '../i18n/ui';
+
+interface Props {
+  produit: CollectionEntry<'produits'>;
+}
+const { produit } = Astro.props;
+const { lang, nom } = decouper(produit.id);
+const d = produit.data;
+---
+
+<button
+  type="button"
+  class="btn snipcart-add-item"
+  data-item-id={nom}
+  data-item-name={d.nom}
+  data-item-price={d.prix.toFixed(2)}
+  data-item-url={new URL(urlProduit(produit.id), Astro.site).href}
+  data-item-description={d.description}
+  data-item-image={d.image ? new URL(d.image, Astro.site).href : undefined}
+  data-item-weight={d.poids}
+>{t(lang).ajouterPanier}</button>

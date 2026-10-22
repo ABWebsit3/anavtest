@@ -1,0 +1,141 @@
+---
+// Toutes les pages de contenu (TinaCMS) dans chaque langue : pages, blog et articles,
+// boutique et produits (option e-commerce uniquement).
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import ContactForm from '../components/ContactForm.astro';
+import BoutonPanier from '../components/BoutonPanier.astro';
+import { fiche, projet, decouper, urlPage, urlArticle, urlProduit, prefixe } from '../moyo/site';
+import { t } from '../i18n/ui';
+import type { Langue } from '../moyo/fiche';
+
+type Vue =
+  | { type: 'page'; entree: CollectionEntry<'pages'> }
+  | { type: 'article'; entree: CollectionEntry<'articles'> }
+  | { type: 'blog'; lang: Langue; articles: CollectionEntry<'articles'>[] }
+  | { type: 'produit'; entree: CollectionEntry<'produits'> }
+  | { type: 'boutique'; lang: Langue; produits: CollectionEntry<'produits'>[] };
+
+export async function getStaticPaths() {
+  const pages = await getCollection('pages');
+  const articles = await getCollection('articles');
+  const produits = projet.has('ecom') ? await getCollection('produits') : [];
+  const versions = <T extends { id: string }>(liste: T[], id: string, url: (id: string) => string) => {
+    const { lang, nom } = decouper(id);
+    return liste
+      .filter((x) => decouper(x.id).nom === nom && decouper(x.id).lang !== lang)
+      .map((x) => ({ lang: decouper(x.id).lang, href: url(x.id) }));
+  };
+  const slug = (url: string) => url.replace(/^\/|\/$/g, '') || undefined;
+
+  return [
+    ...pages.map((p) => ({ params: { slug: slug(urlPage(p.id)) }, props: { vue: { type: 'page', entree: p } as Vue, alternates: versions(pages, p.id, urlPage) } })),
+    ...articles.map((a) => ({ params: { slug: slug(urlArticle(a.id)) }, props: { vue: { type: 'article', entree: a } as Vue, alternates: versions(articles, a.id, urlArticle) } })),
+    ...fiche.site.langues
+      .map((lang) => ({ lang, liste: articles.filter((a) => decouper(a.id).lang === lang).sort((a, b) => +b.data.date - +a.data.date) }))
+      .filter((b) => b.liste.length > 0)
+      .map((b) => ({
+        params: { slug: slug(`${prefixe(b.lang)}/blog/`) },
+        props: {
+          vue: { type: 'blog', lang: b.lang, articles: b.liste } as Vue,
+          alternates: fiche.site.langues.filter((l) => l !== b.lang).map((l) => ({ lang: l, href: `${prefixe(l)}/blog/` })),
+        },
+      })),
+    ...produits.map((x) => ({ params: { slug: slug(urlProduit(x.id)) }, props: { vue: { type: 'produit', entree: x } as Vue, alternates: versions(produits, x.id, urlProduit) } })),
+    ...fiche.site.langues
+      .map((lang) => ({ lang, liste: produits.filter((x) => decouper(x.id).lang === lang).sort((a, b) => a.data.ordre - b.data.ordre) }))
+      .filter((b) => b.liste.length > 0)
+      .map((b) => ({
+        params: { slug: slug(`${prefixe(b.lang)}/boutique/`) },
+        props: {
+          vue: { type: 'boutique', lang: b.lang, produits: b.liste } as Vue,
+          alternates: fiche.site.langues.filter((l) => l !== b.lang).map((l) => ({ lang: l, href: `${prefixe(l)}/boutique/` })),
+        },
+      })),
+  ];
+}
+
+const { vue, alternates } = Astro.props as { vue: Vue; alternates: { lang: Langue; href: string }[] };
+const lang = vue.type === 'blog' || vue.type === 'boutique' ? vue.lang : decouper(vue.entree.id).lang;
+const tx = t(lang);
+const { Content } = vue.type === 'blog' || vue.type === 'boutique' ? { Content: null } : await render(vue.entree);
+const prixFmt = (n: number) => new Intl.NumberFormat(lang, { style: 'currency', currency: fiche.boutique.devise }).format(n);
+const dateFmt = (d: Date) => d.toLocaleDateString(lang, { dateStyle: 'long' });
+---
+
+{vue.type === 'page' && (
+  <Layout titre={vue.entree.data.titre} description={vue.entree.data.description} lang={lang} alternates={alternates}>
+    <article class="prose">
+      <h1>{vue.entree.data.titre}</h1>
+      {Content && <Content />}
+    </article>
+    {vue.entree.data.formulaire && <ContactForm lang={lang} />}
+  </Layout>
+)}
+
+{vue.type === 'article' && (
+  <Layout titre={vue.entree.data.titre} description={vue.entree.data.description} lang={lang} alternates={alternates} type="article">
+    <article class="prose">
+      <h1>{vue.entree.data.titre}</h1>
+      <p><small>{tx.publieLe} <time datetime={vue.entree.data.date.toISOString()}>{dateFmt(vue.entree.data.date)}</time></small></p>
+      {Content && <Content />}
+    </article>
+  </Layout>
+)}
+
+{vue.type === 'blog' && (
+  <Layout titre={tx.blog} description={`${tx.blog} · ${fiche.site.nom}`} lang={lang} alternates={alternates}>
+    <h1>{tx.blog}</h1>
+    <ul class="blog">
+      {vue.articles.map((a) => (
+        <li>
+          <h2><a href={urlArticle(a.id)}>{a.data.titre}</a></h2>
+          <p>{a.data.description}</p>
+        </li>
+      ))}
+    </ul>
+  </Layout>
+)}
+
+{vue.type === 'produit' && (
+  <Layout titre={vue.entree.data.nom} description={vue.entree.data.description} lang={lang} alternates={alternates}>
+    <article class="produit">
+      {vue.entree.data.image && <img src={vue.entree.data.image} alt={vue.entree.data.nom} width="560" loading="eager" />}
+      <div class="prose">
+        <h1>{vue.entree.data.nom}</h1>
+        <p class="produit__prix">{prixFmt(vue.entree.data.prix)}</p>
+        {fiche.boutique.mentionPrix && <p class="produit__mention">{fiche.boutique.mentionPrix}</p>}
+        <p>{vue.entree.data.description}</p>
+        <BoutonPanier produit={vue.entree} />
+        {Content && <Content />}
+      </div>
+    </article>
+  </Layout>
+)}
+
+{vue.type === 'boutique' && (
+  <Layout titre={tx.boutique} description={`${tx.boutique} · ${fiche.site.nom}`} lang={lang} alternates={alternates}>
+    <h1>{tx.boutique}</h1>
+    <ul class="grille">
+      {vue.produits.map((x) => (
+        <li>
+          {x.data.image && <img src={x.data.image} alt="" width="320" loading="lazy" />}
+          <h2><a href={urlProduit(x.id)}>{x.data.nom}</a></h2>
+          <p class="produit__prix">{prixFmt(x.data.prix)}</p>
+          <BoutonPanier produit={x} />
+        </li>
+      ))}
+    </ul>
+  </Layout>
+)}
+
+<style>
+  .produit { display: grid; gap: 32px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-items: start; }
+  .produit img, .grille img { border-radius: 12px; width: 100%; }
+  .produit__prix { font-size: 22px; font-weight: 800; margin-bottom: 0; }
+  .produit__mention { font-size: 14px; opacity: .75; margin-top: 2px; }
+  .grille { list-style: none; padding: 0; display: grid; gap: 28px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+  .grille h2 { font-size: 20px; margin: 10px 0 4px; }
+  .blog { list-style: none; padding: 0; display: grid; gap: 24px; }
+  .blog h2 { margin: 0 0 6px; font-size: 22px; }
+</style>

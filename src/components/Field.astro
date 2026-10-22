@@ -1,0 +1,11 @@
+---
+// Affiche une donnée de la fiche client, ou un repère « [À compléter] » si elle est vide.
+// `npm run check:prod` refuse la mise en ligne tant qu'un repère reste affiché.
+interface Props {
+  v?: string;
+  label: string;
+}
+const { v, label } = Astro.props;
+---
+
+{v ? <Fragment>{v}</Fragment> : <mark class="todo">[À compléter : {label}]</mark>}

@@ -1,0 +1,26 @@
+---
+import Layout from './Layout.astro';
+import Field from '../components/Field.astro';
+import { fiche } from '../moyo/site';
+
+interface Props {
+  titre: string;
+  description: string;
+}
+const { titre, description } = Astro.props;
+---
+
+<Layout titre={titre} description={description} lang="fr">
+  <article class="prose legal">
+    <h1>{titre}</h1>
+    <p class="legal__date">Dernière mise à jour : <Field v={fiche.dateMiseAJourLegale} label="date de mise à jour" /></p>
+    <slot />
+  </article>
+</Layout>
+
+<style>
+  .legal :global(table) { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .legal :global(th), .legal :global(td) { border: 1px solid color-mix(in srgb, var(--texte) 25%, transparent); padding: 8px; text-align: left; vertical-align: top; }
+  .legal :global(.table-wrap) { overflow-x: auto; }
+  .legal__date { opacity: .75; }
+</style>

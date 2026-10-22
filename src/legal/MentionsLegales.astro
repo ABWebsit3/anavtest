@@ -1,0 +1,51 @@
+---
+// Mentions légales de l'éditeur (le client) — loi pour la confiance dans l'économie numérique (LCEN).
+// Agent legal : vérifier chaque champ dans la fiche client, ne rien inventer.
+import Field from '../components/Field.astro';
+import { fiche } from '../moyo/site';
+
+const e = fiche.editeur;
+const h = fiche.hebergeur;
+const societe = /\b(SARL|SAS|SASU|SA|EURL|SCI|SNC)\b/i.test(e.formeJuridique);
+const host = new URL(fiche.site.url).hostname;
+---
+
+<h2>Éditeur du site</h2>
+<p>
+  Le site <strong>{host}</strong> est édité par :<br />
+  <strong><Field v={e.raisonSociale} label="raison sociale ou nom" /></strong>
+  {e.nomCommercial && <Fragment> ({e.nomCommercial})</Fragment>}<br />
+  Forme juridique : <Field v={e.formeJuridique} label="forme juridique" />
+  {societe && <Fragment>, au capital de <Field v={e.capital} label="capital social" /></Fragment>}<br />
+  Représentant : <Field v={e.representant} label="nom et prénom du représentant" /><br />
+  Adresse : <Field v={e.adresse} label="adresse du siège ou du domicile professionnel" /><br />
+  SIRET : <Field v={e.siret} label="SIRET" /><br />
+  <Field v={e.immatriculation} label="immatriculation (RCS, RNE, RNA…)" /><br />
+  {e.tvaIntracom ? <Fragment>N° de TVA intracommunautaire : {e.tvaIntracom}<br /></Fragment> : null}
+  Téléphone : <Field v={e.telephone} label="téléphone" /><br />
+  E-mail : {e.email ? <a href={`mailto:${e.email}`}>{e.email}</a> : <Field v="" label="e-mail" />}
+</p>
+<p>Directeur de la publication : <Field v={e.directeurPublication} label="directeur de la publication" /></p>
+
+<h2>Hébergeur</h2>
+<p>
+  <Field v={h.nom} label="nom de l’hébergeur" /><br />
+  Adresse : <Field v={h.adresse} label="adresse de l’hébergeur" />
+  {h.telephone && <Fragment><br />Téléphone : {h.telephone}</Fragment>}
+</p>
+
+<h2>Réalisation</h2>
+<p>Site conçu et maintenu par Moyo, un service d’ABweb (<a href="https://moyoweb.fr" rel="noopener">moyoweb.fr</a>).</p>
+
+<h2>Propriété intellectuelle</h2>
+<p>
+  Les contenus du site (textes, images, logo) appartiennent à leur auteur ou à <Field v={e.raisonSociale} label="éditeur" />, sauf
+  mention contraire. Toute reproduction sans autorisation préalable est interdite.
+</p>
+
+<h2>Données personnelles et cookies</h2>
+<p>
+  Le traitement des données personnelles et l’usage des cookies sont décrits dans la
+  <a href="/confidentialite/">politique de confidentialité</a>. Les choix de cookies sont modifiables à tout moment
+  via le lien « Gestion des cookies » en bas de page.
+</p>

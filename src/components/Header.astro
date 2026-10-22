@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+import { fiche, projet, decouper, urlPage, prefixe } from '../moyo/site';
+import { t } from '../i18n/ui';
+import type { Langue } from '../moyo/fiche';
+
+interface Props {
+  lang: Langue;
+  alternates: { lang: Langue; href: string }[];
+}
+const { lang, alternates } = Astro.props;
+const menu = (await getCollection('pages'))
+  .filter((p) => decouper(p.id).lang === lang && p.data.menu)
+  .sort((a, b) => a.data.ordre - b.data.ordre);
+const autres = fiche.site.langues.filter((l) => l !== lang);
+const lien = (l: Langue) => alternates.find((a) => a.lang === l)?.href ?? `${prefixe(l)}/`;
+---
+
+<header class="hd">
+  <div class="container hd__in">
+    <a class="hd__logo" href={`${prefixe(lang)}/`}>{fiche.site.nom}</a>
+    <nav aria-label={t(lang).menu}>
+      <ul class="hd__nav">
+        {menu.map((p) => <li><a href={urlPage(p.id)} aria-current={Astro.url.pathname === urlPage(p.id) ? 'page' : undefined}>{p.data.menu}</a></li>)}
+        {projet.has('ecom') && <li><a href={`${prefixe(lang)}/boutique/`} aria-current={Astro.url.pathname.startsWith(`${prefixe(lang)}/boutique/`) ? 'page' : undefined}>{t(lang).boutique}</a></li>}
+      </ul>
+    </nav>
+    {projet.has('ecom') && (
+      <button type="button" class="hd__panier snipcart-checkout">
+        {t(lang).panier} (<span class="snipcart-items-count">0</span>)
+      </button>
+    )}
+    {autres.length > 0 && (
+      <ul class="hd__langs" aria-label={t(lang).changerLangue}>
+        {autres.map((l) => <li><a href={lien(l)} hreflang={l} lang={l}>{t(l).nomLangue}</a></li>)}
+      </ul>
+    )}
+  </div>
+</header>
+
+<style>
+  .hd { border-bottom: 1px solid color-mix(in srgb, var(--texte) 15%, transparent); }
+  .hd__in { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding-block: 16px; }
+  .hd__logo { font-weight: 800; font-size: 20px; color: var(--texte); text-decoration: none; margin-right: auto; }
+  .hd__nav, .hd__langs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .hd__nav a, .hd__langs a { color: var(--texte); text-decoration: none; font-weight: 600; }
+  .hd__nav a[aria-current] { color: var(--primaire); }
+  .hd__panier { font: inherit; font-weight: 700; background: none; border: 2px solid currentColor; border-radius: 999px; padding: 4px 14px; color: var(--texte); cursor: pointer; }
+</style>

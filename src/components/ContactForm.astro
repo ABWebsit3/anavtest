@@ -1,0 +1,44 @@
+---
+// Formulaire de contact (inclus dans tous les forfaits) : envoyé à /contact.php (PHP de l'hébergement Hostinger),
+// généré par src/pages/contact.php.ts avec l'adresse de réception de la fiche client.
+import { t } from '../i18n/ui';
+import type { Langue } from '../moyo/fiche';
+
+interface Props {
+  lang: Langue;
+}
+const { lang } = Astro.props;
+const tx = t(lang);
+---
+
+<section class="cf" id="contact" aria-labelledby="cf-titre">
+  <h2 id="cf-titre">{tx.contactTitre}</h2>
+  <p class="cf__ok" role="status" hidden data-cf="ok">{tx.contactOk}</p>
+  <p class="cf__err" role="alert" hidden data-cf="erreur">{tx.contactErreur}</p>
+  <form method="post" action="/contact.php">
+    <input type="hidden" name="retour" value={Astro.url.pathname} />
+    <label>{tx.contactNom} *<input name="nom" required maxlength="100" autocomplete="name" /></label>
+    <label>{tx.contactEmail} *<input name="email" type="email" required maxlength="254" autocomplete="email" /></label>
+    <label>{tx.contactMessage} *<textarea name="message" required maxlength="5000" rows="6"></textarea></label>
+    <div class="cf__hp" aria-hidden="true"><label>Site web <input name="website" tabindex="-1" autocomplete="off" /></label></div>
+    <p class="cf__rgpd">{tx.contactRgpd} <a href="/confidentialite/">{tx.contactEnSavoirPlus}</a></p>
+    <button class="btn" type="submit">{tx.contactEnvoyer}</button>
+  </form>
+</section>
+
+<script>
+  // Affiche le résultat renvoyé par contact.php (?contact=ok|erreur#contact).
+  const etat = new URLSearchParams(location.search).get('contact');
+  if (etat) document.querySelector<HTMLElement>(`[data-cf="${etat === 'ok' ? 'ok' : 'erreur'}"]`)?.removeAttribute('hidden');
+</script>
+
+<style>
+  .cf { margin-top: 56px; max-width: 640px; }
+  .cf form { display: grid; gap: 14px; }
+  .cf label { display: grid; gap: 6px; font-weight: 600; }
+  .cf input, .cf textarea { font: inherit; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--texte) 35%, transparent); border-radius: 8px; background: #fff; color: #111; }
+  .cf__hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+  .cf__rgpd { font-size: 14px; margin: 0; }
+  .cf__ok { color: #12703a; font-weight: 700; }
+  .cf__err { color: #b42318; font-weight: 700; }
+</style>

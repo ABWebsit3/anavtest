@@ -1,0 +1,97 @@
+---
+// Politique de confidentialité, construite à partir des options réellement actives (fiche client).
+// Agent legal : chaque service tiers ajouté au site doit apparaître ici ET dans tarteaucitron (Layout).
+import Field from '../components/Field.astro';
+import { fiche, projet } from '../moyo/site';
+
+const e = fiche.editeur;
+const p = fiche.prestataires;
+const traitements = [
+  { quand: 'Formulaire de contact', donnees: 'Nom, e-mail, message', finalite: 'Répondre à votre demande', base: 'Intérêt légitime (art. 6.1.f RGPD)', duree: '3 ans à compter du dernier échange' },
+  ...(projet.has('ecom') ? [{ quand: 'Commande en ligne', donnees: 'Identité, coordonnées, adresse de livraison, historique de commande', finalite: 'Traiter et livrer la commande, facturer, gérer le service après-vente', base: 'Exécution du contrat (art. 6.1.b) et obligations légales (art. 6.1.c)', duree: 'Durée de la relation commerciale, puis 10 ans pour les pièces comptables' }] : []),
+  ...(projet.has('resa') ? [{ quand: 'Réservation en ligne', donnees: 'Nom, coordonnées, créneau réservé', finalite: 'Gérer la réservation', base: 'Exécution du contrat ou mesures précontractuelles (art. 6.1.b)', duree: '[À compléter : durée de conservation des réservations]' }] : []),
+  ...(projet.has('news') ? [{ quand: 'Inscription à la newsletter', donnees: 'E-mail', finalite: 'Envoyer la newsletter', base: 'Consentement (art. 6.1.a), retirable à tout moment via le lien de désinscription', duree: 'Jusqu’à la désinscription' }] : []),
+  ...(projet.has('ana') ? [{ quand: 'Mesure d’audience (si acceptée)', donnees: 'Données de navigation (pages vues, appareil, adresse IP tronquée)', finalite: 'Comprendre l’usage du site pour l’améliorer', base: 'Consentement (art. 6.1.a), recueilli via le bandeau cookies', duree: '13 mois maximum pour les cookies' }] : []),
+];
+const destinataires = [
+  `Hébergement du site : ${fiche.hebergeur.nom || '[À compléter : hébergeur]'}`,
+  'Conception et maintenance du site : Moyo (ABweb), sous-traitant',
+  ...(projet.has('ecom')
+    ? [
+        'Panier et gestion des commandes : Snipcart (Snipcart Inc., Canada), sous-traitant',
+        `Paiement en ligne : ${p.paiement || '[À compléter : passerelle de paiement reliée à Snipcart]'}`,
+      ]
+    : []),
+  ...(projet.has('resa') ? [`Réservation : ${p.reservation || '[À compléter : outil de réservation]'}`] : []),
+  ...(projet.has('news') ? [`Envoi de la newsletter : ${p.newsletter || '[À compléter : outil d’emailing]'}`] : []),
+  ...(projet.has('feed') || projet.has('chat') ? [`Réseaux sociaux (messagerie, publications intégrées) : ${p.reseauxSociaux || '[À compléter : Meta / WhatsApp…]'}`] : []),
+  ...(projet.has('ana') ? ['Mesure d’audience, uniquement si vous l’acceptez : Google Analytics (Google Ireland Limited, avec des transferts possibles vers Google LLC, États-Unis)'] : []),
+];
+---
+
+<h2>Responsable du traitement</h2>
+<p>
+  <Field v={e.raisonSociale} label="raison sociale" />, <Field v={e.adresse} label="adresse" />.
+  Contact : {e.email ? <a href={`mailto:${e.email}`}>{e.email}</a> : <Field v="" label="e-mail" />}.
+</p>
+
+<h2>Données collectées et finalités</h2>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Situation</th><th>Données</th><th>Finalité</th><th>Base légale</th><th>Conservation</th></tr></thead>
+    <tbody>
+      {traitements.map((r) => (
+        <tr><td>{r.quand}</td><td>{r.donnees}</td><td>{r.finalite}</td><td>{r.base}</td><td>{r.duree.startsWith('[À compléter') ? <mark class="todo">{r.duree}</mark> : r.duree}</td></tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p>Vos données ne sont ni vendues ni utilisées pour de la publicité ciblée.</p>
+
+<h2>Destinataires</h2>
+<ul>
+  {destinataires.map((d) => <li>{d.includes('[À compléter') ? <mark class="todo">{d}</mark> : d}</li>)}
+</ul>
+
+{(projet.has('ana') || projet.has('ecom')) && (
+  <Fragment>
+    <h2>Transferts hors de l’Union européenne</h2>
+    {projet.has('ecom') && (
+      <p>
+        Les données de commande sont traitées par Snipcart Inc. au Canada. Ce transfert repose sur la décision
+        d’adéquation de la Commission européenne concernant le Canada (organisations soumises à la loi canadienne
+        sur la protection des renseignements personnels) et sur l’avenant de traitement des données de Snipcart.
+      </p>
+    )}
+    {projet.has('ana') && (
+      <p>
+        Google Analytics peut entraîner un transfert de données vers les États-Unis (Google LLC). Ce transfert est encadré
+        par le Data Privacy Framework UE–États-Unis et/ou les clauses contractuelles types de la Commission européenne.
+      </p>
+    )}
+  </Fragment>
+)}
+
+<h2>Cookies</h2>
+<p>
+  Un cookie technique (« tarteaucitron ») mémorise vos choix de consentement pendant 6 mois ; il est nécessaire et
+  ne requiert pas votre accord.
+  {projet.services.length > 0
+    ? <Fragment> Les autres cookies ({projet.services.map((s) => s.nom).join(', ')}) ne sont déposés qu’après votre accord.</Fragment>
+    : <Fragment> Aucun autre cookie n’est déposé.</Fragment>}
+  Vous pouvez modifier vos choix à tout moment via le lien « Gestion des cookies » en bas de page.
+</p>
+{projet.has('ecom') && (
+  <p>
+    La boutique utilise Snipcart, qui enregistre dans votre navigateur le contenu de votre panier. Ce stockage est
+    nécessaire au fonctionnement du panier que vous utilisez et ne sert pas à vous suivre.
+  </p>
+)}
+
+<h2>Vos droits</h2>
+<p>
+  Vous disposez d’un droit d’accès, de rectification, d’effacement, de limitation, d’opposition et de portabilité de vos
+  données, ainsi que du droit de retirer votre consentement à tout moment. Pour les exercer :
+  {e.email ? <a href={`mailto:${e.email}`}>{e.email}</a> : <Field v="" label="e-mail" />}. Réponse sous un mois.
+  Vous pouvez aussi introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr" rel="noopener">www.cnil.fr</a>).
+</p>

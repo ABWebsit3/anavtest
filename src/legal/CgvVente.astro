@@ -1,0 +1,36 @@
+---
+// CGV de vente en ligne du client (option E-commerce). SQUELETTE à compléter par l'agent legal avec le client,
+// puis à faire relire : chaque « [À compléter] » bloque la mise en ligne (npm run check:prod).
+import Field from '../components/Field.astro';
+import { fiche } from '../moyo/site';
+
+const e = fiche.editeur;
+---
+
+<h2>1. Vendeur</h2>
+<p>
+  <Field v={e.raisonSociale} label="raison sociale" />, <Field v={e.adresse} label="adresse" />, SIRET <Field v={e.siret} label="SIRET" />,
+  {e.email}, <Field v={e.telephone} label="téléphone" />.
+</p>
+<h2>2. Champ d’application et clients concernés</h2>
+<p><Field v="" label="vente aux consommateurs, aux professionnels, ou aux deux" /></p>
+<h2>3. Produits et prix</h2>
+<p><Field v="" label="description des produits, prix TTC ou mention TVA non applicable, frais de livraison" /></p>
+<h2>4. Commande</h2>
+<p><Field v="" label="étapes de la commande, confirmation par e-mail" /></p>
+<h2>5. Paiement</h2>
+<p>Le panier et les commandes sont gérés par Snipcart (Snipcart Inc., Canada). Paiement sécurisé via <Field v={fiche.prestataires.paiement} label="passerelle de paiement" />. <Field v="" label="moyens de paiement acceptés, date de débit" /></p>
+<h2>6. Livraison</h2>
+<p><Field v="" label="zones, délais, transporteurs, frais" /></p>
+<h2>7. Droit de rétractation (consommateurs)</h2>
+<p><Field v="" label="délai de 14 jours, modalités, formulaire type, exceptions, frais de retour" /></p>
+<h2>8. Garanties légales</h2>
+<p><Field v="" label="garantie légale de conformité et garantie des vices cachés : textes à reproduire" /></p>
+<h2>9. Service client et réclamations</h2>
+<p><Field v="" label="coordonnées et horaires du service client" /></p>
+<h2>10. Médiation de la consommation</h2>
+<p><Field v="" label="nom et coordonnées du médiateur de la consommation" /></p>
+<h2>11. Données personnelles</h2>
+<p>Voir la <a href="/confidentialite/">politique de confidentialité</a>.</p>
+<h2>12. Droit applicable</h2>
+<p><Field v="" label="droit applicable et juridiction compétente" /></p>

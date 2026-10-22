@@ -1,0 +1,109 @@
+---
+// Gabarit commun : SEO technique (agent seo-technique), consentement (agent legal), langues (agent traduction).
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Snipcart from '../components/Snipcart.astro';
+import { fiche, projet, langueDefaut } from '../moyo/site';
+import type { Langue } from '../moyo/fiche';
+
+interface Props {
+  titre: string;
+  description: string;
+  lang?: Langue;
+  /** Versions de la même page dans les autres langues (hreflang). */
+  alternates?: { lang: Langue; href: string }[];
+  type?: 'website' | 'article';
+  noindex?: boolean;
+}
+
+const { titre, description, lang = langueDefaut, alternates = [], type = 'website', noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const titreComplet = titre === fiche.site.nom ? titre : `${titre} · ${fiche.site.nom}`;
+const ogLocale = { fr: 'fr_FR', en: 'en_GB', es: 'es_ES', de: 'de_DE', it: 'it_IT', pt: 'pt_PT', nl: 'nl_NL' }[lang];
+
+// Données structurées de l'éditeur (uniquement les champs renseignés).
+const e = fiche.editeur;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: e.nomCommercial || e.raisonSociale || fiche.site.nom,
+  url: fiche.site.url,
+  ...(e.email && { email: e.email }),
+  ...(e.telephone && { telephone: e.telephone }),
+  ...(e.adresse && { address: e.adresse }),
+};
+
+// Services soumis au consentement (tarteaucitron), dérivés des options de la fiche.
+const ga4Id = import.meta.env.PUBLIC_GA4_ID ?? '';
+const services = projet.services.map((s) => s.id);
+const cssVars = `--primaire:${fiche.site.couleurs.primaire};--fond:${fiche.site.couleurs.fond};--texte:${fiche.site.couleurs.texte}`;
+---
+
+<!doctype html>
+<html lang={lang} style={cssVars}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titreComplet}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={canonical} />
+    {alternates.length > 0 && (
+      <Fragment>
+        <link rel="alternate" hreflang={lang} href={canonical} />
+        {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={new URL(a.href, Astro.site).href} />)}
+        <link rel="alternate" hreflang="x-default" href={new URL((alternates.find((a) => a.lang === langueDefaut)?.href ?? Astro.url.pathname), Astro.site).href} />
+      </Fragment>
+    )}
+    <meta property="og:title" content={titreComplet} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={fiche.site.nom} />
+    <meta property="og:locale" content={ogLocale} />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- Consentement aux cookies : tarteaucitron.js auto-hébergé (copié par scripts/copy-tarteaucitron.mjs) -->
+    <link rel="stylesheet" href="/tarteaucitron/css/tarteaucitron.min.css" />
+    <script is:inline define:vars={{ lang }}>
+      window.tarteaucitronForceLanguage = lang;
+      window.tarteaucitronForceExpire = 183; // choix conservé 6 mois (recommandation CNIL)
+    </script>
+    <script is:inline src="/tarteaucitron/tarteaucitron.min.js"></script>
+    <script is:inline define:vars={{ ga4Id, services }}>
+      tarteaucitron.init({
+        privacyUrl: '/confidentialite/',
+        hashtag: '#tarteaucitron',
+        cookieName: 'tarteaucitron',
+        orientation: 'bottom',
+        showAlertSmall: false,
+        cookieslist: false,
+        showIcon: false,
+        DenyAllCta: true,
+        AcceptAllCta: true,
+        highPrivacy: true,
+        handleBrowserDNTRequest: false,
+        removeCredit: false,
+        moreInfoLink: true,
+        useExternalCss: false,
+        mandatory: true,
+        googleConsentMode: false, // aucun appel à Google avant consentement
+      });
+      if (services.includes('gtag') && ga4Id) {
+        tarteaucitron.user.gtagUa = ga4Id;
+        (tarteaucitron.job = tarteaucitron.job || []).push('gtag');
+      }
+    </script>
+    {projet.has('ecom') && <Snipcart />}
+  </head>
+  <body>
+    <a class="skip" href="#contenu">Aller au contenu</a>
+    <Header lang={lang} alternates={alternates} />
+    <main id="contenu" class="container">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+  </body>
+</html>

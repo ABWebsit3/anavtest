@@ -1,0 +1,99 @@
+# Pipeline : push sur main → contrôle Moyo → build → envoi FTP(S) sur l'hébergement du client.
+# Secrets requis (Settings → Secrets and variables → Actions) : FTP_SERVER, FTP_USERNAME, FTP_PASSWORD.
+# Facultatifs : FTP_SERVER_DIR (défaut /public_html/), PUBLIC_GA4_ID (option Analytics),
+#               TINA_CLIENT_ID + TINA_TOKEN (espace d'édition TinaCMS sur /admin/),
+#               PUBLIC_SNIPCART_API_KEY (option e-commerce : clé publique « live » Snipcart).
+name: Contrôle, build et déploiement FTP
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Simulation : affiche ce qui serait envoyé sans rien modifier sur le serveur'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Ne tourne pas sur le dépôt modèle lui-même (fiche d'exemple) : seulement sur les sites créés depuis le modèle.
+    if: github.repository != 'ABWebsit3/moyo-site-template'
+    runs-on: ubuntu-latest
+    env:
+      PUBLIC_GA4_ID: ${{ secrets.PUBLIC_GA4_ID }}
+      PUBLIC_SNIPCART_API_KEY: ${{ secrets.PUBLIC_SNIPCART_API_KEY }}
+      TINA_CLIENT_ID: ${{ secrets.TINA_CLIENT_ID }}
+      TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Sur une pull request : contrôle en mode développement (les manques sont des avertissements).
+      - name: Contrôle Moyo (développement)
+        if: github.event_name == 'pull_request'
+        run: npm run check
+      # Avant toute mise en ligne : tout manque bloque (fiche, pages légales, traductions, suivi…).
+      - name: Contrôle Moyo (mise en ligne)
+        if: github.event_name != 'pull_request'
+        run: npm run check:prod
+
+      - name: Build avec l'espace d'édition TinaCMS
+        if: env.TINA_CLIENT_ID != '' && env.TINA_TOKEN != ''
+        run: npm run build:cms
+      - name: Build sans espace d'édition (identifiants TinaCloud absents)
+        if: env.TINA_CLIENT_ID == '' || env.TINA_TOKEN == ''
+        run: npm run build
+
+      # Vérifie qu'aucun « [À compléter] » ne reste dans les pages construites.
+      - name: Contrôle des pages construites
+        if: github.event_name != 'pull_request'
+        run: npm run check:prod
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: site
+          path: dist/
+          retention-days: 7
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: site
+          path: dist/
+      - name: Vérifier les secrets FTP
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+        run: |
+          if [ -z "$FTP_SERVER" ]; then
+            echo "::error::Secrets FTP absents (FTP_SERVER, FTP_USERNAME, FTP_PASSWORD) : déploiement impossible."
+            exit 1
+          fi
+      - name: Envoi FTPS
+        # SamKirkland/FTP-Deploy-Action v4.4.0, épinglée sur son commit.
+        uses: SamKirkland/FTP-Deploy-Action@3a9c65ae0fc12ac924ccef8afc26941cc43aad0b
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./dist/
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/' }}
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}

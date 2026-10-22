@@ -1,0 +1,30 @@
+{
+  "legal": {
+    "fait": false,
+    "note": ""
+  },
+  "seo-technique": {
+    "fait": false,
+    "note": ""
+  },
+  "seo-contenu": {
+    "fait": false,
+    "note": ""
+  },
+  "traduction": {
+    "fait": false,
+    "note": ""
+  },
+  "option:ana": {
+    "fait": false,
+    "note": ""
+  },
+  "recette": {
+    "fait": false,
+    "note": ""
+  },
+  "deploiement": {
+    "fait": false,
+    "note": ""
+  }
+}

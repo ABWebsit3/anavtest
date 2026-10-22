@@ -1,0 +1,27 @@
+---
+// Pages légales (en français) : générées selon les options de la fiche client.
+import LegalLayout from '../layouts/LegalLayout.astro';
+import MentionsLegales from '../legal/MentionsLegales.astro';
+import Confidentialite from '../legal/Confidentialite.astro';
+import CgvVente from '../legal/CgvVente.astro';
+import { projet } from '../moyo/site';
+
+export function getStaticPaths() {
+  return [
+    { params: { legal: 'mentions-legales' }, props: { titre: 'Mentions légales', description: 'Éditeur du site, hébergeur et informations légales.' } },
+    { params: { legal: 'confidentialite' }, props: { titre: 'Politique de confidentialité', description: 'Données personnelles collectées, finalités, durées de conservation et droits.' } },
+    ...(projet.has('ecom')
+      ? [{ params: { legal: 'conditions-generales-de-vente' }, props: { titre: 'Conditions générales de vente', description: 'Conditions de vente en ligne.' } }]
+      : []),
+  ];
+}
+
+const { legal } = Astro.params;
+const { titre, description } = Astro.props;
+---
+
+<LegalLayout titre={titre} description={description}>
+  {legal === 'mentions-legales' && <MentionsLegales />}
+  {legal === 'confidentialite' && <Confidentialite />}
+  {legal === 'conditions-generales-de-vente' && <CgvVente />}
+</LegalLayout>

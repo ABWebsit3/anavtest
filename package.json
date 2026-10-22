@@ -1,0 +1,35 @@
+{
+  "name": "moyo-site-client",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "astro": "7.3.8",
+    "sharp": "0.35.5",
+    "tarteaucitronjs": "1.36.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@tinacms/cli": "4.0.2",
+    "@types/node": "22.20.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tinacms": "3.14.4",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "predev": "node scripts/copy-tarteaucitron.mjs",
+    "dev": "astro dev",
+    "dev:cms": "tinacms dev -c \"astro dev\"",
+    "prebuild": "node scripts/copy-tarteaucitron.mjs",
+    "build": "astro build",
+    "build:cms": "tinacms build && astro build",
+    "preview": "astro preview",
+    "check": "astro check && node scripts/moyo-check.ts",
+    "check:prod": "astro check && node scripts/moyo-check.ts --prod",
+    "astro": "astro"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

@@ -1,0 +1,30 @@
+---
+import { fiche, projet } from '../moyo/site';
+import { t } from '../i18n/ui';
+import type { Langue } from '../moyo/fiche';
+
+interface Props {
+  lang: Langue;
+}
+const { lang } = Astro.props;
+const tx = t(lang);
+---
+
+<footer class="ft">
+  <div class="container ft__in">
+    <span>© {new Date().getFullYear()} {fiche.site.nom}</span>
+    <a href="/mentions-legales/">{tx.mentionsLegales}</a>
+    <a href="/confidentialite/">{tx.confidentialite}</a>
+    {projet.has('ecom') && <a href="/conditions-generales-de-vente/">{tx.cgv}</a>}
+    <button type="button" class="ft__cookies" onclick="tarteaucitron.userInterface.openPanel()">{tx.gestionCookies}</button>
+    <span class="ft__moyo">Site réalisé par <a href="https://moyoweb.fr" rel="noopener">Moyo</a></span>
+  </div>
+</footer>
+
+<style>
+  .ft { margin-top: 80px; border-top: 1px solid color-mix(in srgb, var(--texte) 15%, transparent); font-size: 15px; }
+  .ft__in { display: flex; flex-wrap: wrap; gap: 10px 22px; padding-block: 24px; align-items: center; }
+  .ft a, .ft__cookies { color: inherit; }
+  .ft__cookies { background: none; border: 0; padding: 0; font: inherit; text-decoration: underline; cursor: pointer; }
+  .ft__moyo { margin-left: auto; opacity: .75; }
+</style>
