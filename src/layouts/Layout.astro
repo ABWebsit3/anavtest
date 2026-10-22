@@ -4,7 +4,12 @@ import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Snipcart from '../components/Snipcart.astro';
-import { fiche, projet, langueDefaut } from '../moyo/site';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { getEntry } from 'astro:content';
+import { fiche, projet, langueDefaut, prefixe } from '../moyo/site';
+import { t } from '../i18n/ui';
+import { tel } from '../moyo/texte';
 import type { Langue } from '../moyo/fiche';
 
 interface Props {
@@ -15,24 +20,72 @@ interface Props {
   alternates?: { lang: Langue; href: string }[];
   type?: 'website' | 'article';
   noindex?: boolean;
+  /** Libellé de la page dans le fil d'Ariane visible (→ BreadcrumbList). */
+  ariane?: string;
 }
 
-const { titre, description, lang = langueDefaut, alternates = [], type = 'website', noindex = false } = Astro.props;
+const { titre, description, lang = langueDefaut, alternates = [], type = 'website', noindex = false, ariane } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const accueil = new URL(`${prefixe(lang)}/`, Astro.site).href;
 const titreComplet = titre === fiche.site.nom ? titre : `${titre} · ${fiche.site.nom}`;
 const ogLocale = { fr: 'fr_FR', en: 'en_GB', es: 'es_ES', de: 'de_DE', it: 'it_IT', pt: 'pt_PT', nl: 'nl_NL' }[lang];
 
-// Données structurées de l'éditeur (uniquement les champs renseignés).
+// Réglages communs (logo, lieux d'accueil) : content/reglages/<langue>.md.
+const r = ((await getEntry('reglages', lang)) ?? (await getEntry('reglages', langueDefaut)))?.data;
+const logo = r?.logo.image ? new URL(r.logo.image, Astro.site).href : '';
+// Image de partage : à défaut d'une image dédiée, le logo s'il a été fourni (jamais d'image inventée).
+const ogImage = logo;
+// Icônes facultatives en plus de public/favicon.ico : public/favicon.svg et public/apple-touch-icon.png (180 × 180).
+const icone = (f: string) => existsSync(join(process.cwd(), 'public', f));
+const faviconSvg = icone('favicon.svg');
+const appleTouch = icone('apple-touch-icon.png');
+
+// Données structurées (schema.org) : uniquement les champs renseignés dans la fiche et les réglages.
+// Type de l'organisation : `site.typeSchema` de la fiche (Organization par défaut).
 const e = fiche.editeur;
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: e.nomCommercial || e.raisonSociale || fiche.site.nom,
-  url: fiche.site.url,
-  ...(e.email && { email: e.email }),
-  ...(e.telephone && { telephone: e.telephone }),
-  ...(e.adresse && { address: e.adresse }),
+const racine = new URL('/', Astro.site).href;
+const idOrganisation = `${racine}#organisation`;
+const telIntl = (n: string) => tel(n).replace(/^tel:/, '');
+/** « 56, route de Lunes, 11100 Narbonne » → PostalAddress (sinon, le texte tel quel). */
+const adresse = (a: string) => {
+  const m = a.match(/^(.+?),?\s+(\d{5})\s+(.+)$/);
+  return m
+    ? { '@type': 'PostalAddress', streetAddress: m[1].trim(), postalCode: m[2], addressLocality: m[3].trim(), addressCountry: 'FR' }
+    : a;
 };
+const lieux = (r?.lieux ?? []).filter((l) => l.adresse);
+const organisation = {
+  '@type': fiche.site.typeSchema ?? 'Organization',
+  '@id': idOrganisation,
+  name: e.nomCommercial || e.raisonSociale || fiche.site.nom,
+  ...(e.raisonSociale && e.raisonSociale !== e.nomCommercial && { legalName: e.raisonSociale }),
+  url: racine,
+  ...(fiche.site.description && { description: fiche.site.description }),
+  ...(logo && { logo }),
+  ...(e.email && { email: e.email }),
+  ...(e.telephone && { telephone: telIntl(e.telephone) }),
+  ...(e.adresse && { address: adresse(e.adresse) }),
+  ...(lieux.length > 0 && {
+    location: lieux.map((l) => ({
+      '@type': 'Place',
+      name: [l.nom, l.batiment].filter(Boolean).join(' · '),
+      address: adresse(l.adresse!),
+      ...(l.telephones.length > 0 && { telephone: l.telephones.map(telIntl) }),
+    })),
+  }),
+};
+const graphe: object[] = [organisation];
+if (canonical === accueil)
+  graphe.push({ '@type': 'WebSite', '@id': `${accueil}#site`, url: accueil, name: fiche.site.nom, inLanguage: lang, publisher: { '@id': idOrganisation } });
+if (ariane && canonical !== accueil)
+  graphe.push({
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t(lang).accueil, item: accueil },
+      { '@type': 'ListItem', position: 2, name: ariane, item: canonical },
+    ],
+  });
+const jsonLd = { '@context': 'https://schema.org', '@graph': graphe };
 
 // Services soumis au consentement (tarteaucitron), dérivés des options de la fiche.
 const ga4Id = import.meta.env.PUBLIC_GA4_ID ?? '';
@@ -47,9 +100,8 @@ const cssVars = `--primaire:${fiche.site.couleurs.primaire};--fond:${fiche.site.
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{titreComplet}</title>
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex" />}
-    <link rel="canonical" href={canonical} />
-    {alternates.length > 0 && (
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    {!noindex && alternates.length > 0 && (
       <Fragment>
         <link rel="alternate" hreflang={lang} href={canonical} />
         {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={new URL(a.href, Astro.site).href} />)}
@@ -59,11 +111,16 @@ const cssVars = `--primaire:${fiche.site.couleurs.primaire};--fond:${fiche.site.
     <meta property="og:title" content={titreComplet} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={type} />
-    <meta property="og:url" content={canonical} />
+    {!noindex && <meta property="og:url" content={canonical} />}
     <meta property="og:site_name" content={fiche.site.nom} />
     <meta property="og:locale" content={ogLocale} />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    {faviconSvg && <link rel="icon" href="/favicon.svg" type="image/svg+xml" />}
+    {appleTouch && <link rel="apple-touch-icon" href="/apple-touch-icon.png" />}
+    <link rel="preload" href="/fonts/plus-jakarta-sans-v12-latin.woff2" as="font" type="font/woff2" crossorigin />
+    {!noindex && <script type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />}
 
     <!-- Consentement aux cookies : tarteaucitron.js auto-hébergé (copié par scripts/copy-tarteaucitron.mjs) -->
     <link rel="stylesheet" href="/tarteaucitron/css/tarteaucitron.min.css" />
@@ -92,6 +149,12 @@ const cssVars = `--primaire:${fiche.site.couleurs.primaire};--fond:${fiche.site.
         googleConsentMode: false, // aucun appel à Google avant consentement
       });
       if (services.includes('gtag') && ga4Id) {
+        // Avant tout « config » (support.google.com/analytics/answer/9050852) : ni signaux Google ni personnalisation
+        // publicitaire, quels que soient les réglages de la propriété. File d'attente locale : rien ne part avant consentement.
+        window.dataLayer = window.dataLayer || [];
+        const fileGtag = function () { window.dataLayer.push(arguments); };
+        fileGtag('set', 'allow_google_signals', false);
+        fileGtag('set', 'allow_ad_personalization_signals', false);
         tarteaucitron.user.gtagUa = ga4Id;
         (tarteaucitron.job = tarteaucitron.job || []).push('gtag');
       }
@@ -99,9 +162,9 @@ const cssVars = `--primaire:${fiche.site.couleurs.primaire};--fond:${fiche.site.
     {projet.has('ecom') && <Snipcart />}
   </head>
   <body>
-    <a class="skip" href="#contenu">Aller au contenu</a>
+    <a class="skip" href="#contenu">{t(lang).allerAuContenu}</a>
     <Header lang={lang} alternates={alternates} />
-    <main id="contenu" class="container">
+    <main id="contenu">
       <slot />
     </main>
     <Footer lang={lang} />

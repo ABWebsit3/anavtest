@@ -1,0 +1,61 @@
+---
+// Accroche de la page d'accueil : titre principal (h1), boutons, puces, photo et encart.
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import Bouton from './Bouton.astro';
+import Photo from './Photo.astro';
+import Icone from '../Icone.astro';
+import { enBlocs, enLigne, tel } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'accroche'>;
+}
+const { s } = Astro.props;
+---
+
+<Sec ancre={s.ancre} fond={s.fond} class="acc">
+  <div class="acc__grille">
+    <div class="acc__texte">
+      {s.surtitre && <p class="surtitre acc__surtitre">{s.surtitre}</p>}
+      <h1>{s.titre}</h1>
+      {s.texte && <div class="acc__intro" set:html={enBlocs(s.texte)} />}
+      {s.boutons.length > 0 && <div class="acc__boutons">{s.boutons.map((b, i) => <Bouton bouton={b} style={i ? 'secondaire' : 'primaire'} />)}</div>}
+      {s.puces.length > 0 && (
+        <ul class="acc__puces">{s.puces.map((p) => <li><Icone nom="coche" couleur="var(--primaire)" />{p}</li>)}</ul>
+      )}
+    </div>
+    {(s.image || s.consignePhoto || s.encart) && (
+      <div class="acc__visuel">
+        <Photo image={s.image} alt={s.imageAlt} consigne={s.consignePhoto} class="acc__photo" />
+        {s.encart && (
+          <div class="acc__encart">
+            {s.encart.surtitre && <p class="surtitre">{s.encart.surtitre}</p>}
+            {s.encart.texte && <p class="acc__adresse" set:html={enLigne(s.encart.texte)} />}
+            {s.encart.telephone && <a class="acc__tel" href={tel(s.encart.telephone)}>{s.encart.telephone}</a>}
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+</Sec>
+
+<style>
+  .acc { padding-block: clamp(48px, 6vw, 72px) clamp(56px, 7vw, 88px); }
+  .acc__grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(480px, 100%), 1fr)); gap: 56px; align-items: center; }
+  .acc__texte { display: flex; flex-direction: column; gap: 28px; }
+  .acc__surtitre { font-size: 14px; letter-spacing: 0.08em; }
+  h1 { margin: 0; font-size: clamp(36px, 5.2vw, 56px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 800; }
+  .acc__intro :global(p) { margin: 0; font-size: clamp(18px, 1.6vw, 20px); line-height: 1.6; color: var(--texte-doux); max-width: 34em; }
+  .acc__boutons { display: flex; flex-wrap: wrap; gap: 12px; }
+  .acc__puces { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 15px; font-weight: 600; }
+  .acc__puces li { display: flex; gap: 8px; align-items: center; }
+  .acc__visuel { position: relative; min-height: 520px; }
+  .acc__visuel :global(.acc__photo) { position: absolute; inset: 0 0 48px 48px; min-height: 0; }
+  .acc__encart { position: absolute; left: 0; bottom: 0; width: min(340px, 90%); background: #fff; border-radius: 20px; padding: 24px; box-shadow: 0 20px 48px rgba(15, 42, 74, 0.16); display: flex; flex-direction: column; gap: 8px; }
+  .acc__adresse { margin: 0; font-size: 16px; line-height: 1.5; color: var(--texte-doux); }
+  .acc__tel { font-size: 22px; font-weight: 800; text-decoration: none; color: var(--texte); }
+  @media (max-width: 560px) {
+    .acc__visuel { min-height: 0; display: flex; flex-direction: column; gap: 16px; }
+    .acc__visuel :global(.acc__photo) { position: static; min-height: 280px; }
+    .acc__encart { position: static; width: auto; }
+  }
+</style>

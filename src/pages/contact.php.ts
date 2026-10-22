@@ -36,11 +36,12 @@ $horodatages[] = time();
 $ligne = fn(string $k, int $max): string => trim(str_replace(["\\r", "\\n"], ' ', mb_substr((string)($_POST[$k] ?? ''), 0, $max)));
 $nom = $ligne('nom', 100);
 $email = $ligne('email', 254);
+$telephone = $ligne('telephone', 30);
 $message = trim(mb_substr((string)($_POST['message'] ?? ''), 0, 5000));
 if ($nom === '' || $message === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) retour('erreur');
 
 $sujet = '=?UTF-8?B?' . base64_encode('[' . SITE . '] Nouveau message de ' . $nom) . '?=';
-$corps = "Nom : $nom\\nE-mail : $email\\n\\n$message\\n";
+$corps = "Nom : $nom\\nE-mail : $email\\n" . ($telephone !== '' ? "Téléphone : $telephone\\n" : '') . "\\n$message\\n";
 $entetes = implode("\\r\\n", [
   'From: ' . EXPEDITEUR,
   'Reply-To: ' . $email,

@@ -1,0 +1,38 @@
+---
+// Questions fréquentes (accordéons natifs <details>, la première ouverte).
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import { enBlocs } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'faq'>;
+}
+const { s } = Astro.props;
+---
+
+<Sec ancre={s.ancre} fond={s.fond}>
+  <div class="deux-col">
+    <div class="sec__tete">
+      {s.titre && <h2 class="h2">{s.titre}</h2>}
+      {s.texte && <div class="lead" set:html={enBlocs(s.texte)} />}
+    </div>
+    <div class="faq">
+      {s.questions.map((q, i) => (
+        <details open={i === 0}>
+          <summary>{q.question}<span class="faq__plus" aria-hidden="true">+</span></summary>
+          {q.reponse && <div class="faq__reponse" set:html={enBlocs(q.reponse)} />}
+        </details>
+      ))}
+    </div>
+  </div>
+</Sec>
+
+<style>
+  .faq { display: flex; flex-direction: column; gap: 12px; }
+  details { background: var(--fond); border-radius: 18px; padding: 22px 24px; }
+  :global(.sec--gris) details { background: #fff; }
+  summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px; font-size: 18px; font-weight: 700; }
+  summary::-webkit-details-marker { display: none; }
+  .faq__plus { font-size: 24px; line-height: 1; color: var(--primaire); transition: transform 0.2s; }
+  details[open] .faq__plus { transform: rotate(45deg); }
+  .faq__reponse :global(p) { margin: 14px 0 0; font-size: 16px; line-height: 1.65; color: var(--texte-doux); }
+</style>

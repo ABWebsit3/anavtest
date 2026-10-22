@@ -22,6 +22,9 @@ export interface FicheClient {
     langues: Langue[];
     description: string;
     couleurs: { primaire: string; fond: string; texte: string };
+    /** Type schema.org de l'éditeur dans les données structurées (JSON-LD). Défaut : 'Organization'.
+     *  'NGO' (association), 'LocalBusiness' ou un sous-type (commerce recevant du public, horaires fournis)… */
+    typeSchema?: string;
   };
 
   /** Éditeur du site = le client (mentions légales, art. 6 III LCEN). */
@@ -35,7 +38,8 @@ export interface FicheClient {
     adresse: string;
     siren: string;
     siret: string;
-    /** ex. « RCS Narbonne 123 456 789 », « Registre national des entreprises (RNE) », « RNA W… ». */
+    /** ex. « RCS Narbonne 123 456 789 », « Registre national des entreprises (RNE) », « RNA W… ».
+     *  Association : numéro RNA (W + 9 chiffres, récépissé de la préfecture) ; SIRET facultatif s'il n'en a pas. */
     immatriculation: string;
     /** Sociétés uniquement (laisser vide sinon). */
     capital: string;
@@ -43,6 +47,7 @@ export interface FicheClient {
     tvaIntracom: string;
     telephone: string;
     email: string;
+    /** Personne morale : de plein droit son représentant légal (art. 93-2 loi n° 82-652 du 29 juillet 1982). */
     directeurPublication: string;
   };
 
@@ -66,6 +71,10 @@ export interface FicheClient {
     newsletter?: string; // news
     reseauxSociaux?: string; // feed / chat
   };
+
+  /** Option Analytics : durée de conservation réglée dans la propriété GA4 (Administration > Conservation des données),
+   *  citée dans la confidentialité. Vide tant que la propriété n'est pas réglée → [À compléter]. */
+  ga4Conservation?: '' | '2 mois' | '14 mois';
 
   /** Date affichée sur les pages légales (« Dernière mise à jour »). */
   dateMiseAJourLegale: string;

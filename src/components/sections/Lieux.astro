@@ -1,0 +1,91 @@
+---
+// Lieux d'accueil (réglages communs, content/reglages/) : résumé (accueil) ou détail (page contact).
+import type { CollectionEntry } from 'astro:content';
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import { t } from '../../i18n/ui';
+import type { Langue } from '../../moyo/fiche';
+import Bouton from './Bouton.astro';
+import Icone from '../Icone.astro';
+import { enBlocs, enLigne, tel } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'lieux'>;
+  lieux: CollectionEntry<'reglages'>['data']['lieux'];
+  lang: Langue;
+}
+const { s, lieux, lang } = Astro.props;
+const detail = s.affichage === 'detail';
+const avecAdresse = lieux.filter((l) => l.adresse);
+const sansAdresse = lieux.filter((l) => !l.adresse);
+---
+
+<Sec ancre={s.ancre} fond={s.fond} defaut={detail ? 'blanc' : 'gris'}>
+  {(s.titre || s.texte) && (
+    <div class="sec__tete sec__tete--ligne">
+      <div>
+        {s.titre && <h2 class="h2">{s.titre}</h2>}
+        {s.texte && <div class="lead" set:html={enBlocs(s.texte)} />}
+      </div>
+      {s.lien?.libelle && s.lien.url && <a class="lien-fleche" href={s.lien.url}>{s.lien.libelle}</a>}
+    </div>
+  )}
+
+  {!detail && (
+    <div class="grille" style="--min:320px">
+      {lieux.map((l) => (
+        <article class="carte">
+          <h3>{l.nom}</h3>
+          <p>{l.adresse ? <Fragment>{l.batiment && <Fragment>{l.batiment}<br /></Fragment>}{l.adresse}</Fragment> : l.description}</p>
+          {l.telephones.length > 0 && <p class="lx__tels">{l.telephones.map((t) => <a href={tel(t)}>{t}</a>)}</p>}
+          {!l.adresse && l.rendezVous?.libelle && l.rendezVous.url && <p class="lx__tels"><a href={/^[\d\s+.]+$/.test(l.rendezVous.url) ? tel(l.rendezVous.url) : l.rendezVous.url}>{l.rendezVous.libelle}</a></p>}
+        </article>
+      ))}
+    </div>
+  )}
+
+  {detail && (
+    <Fragment>
+      <div class="grille" style="--min:440px">
+        {avecAdresse.map((l) => (
+          <article class="carte lx__detail">
+            {l.batiment && <p class="surtitre">{l.batiment}</p>}
+            <h2>{l.nom}</h2>
+            <div class="lx__infos">
+              <p><Icone nom="lieu" taille={20} couleur="var(--primaire)" />{l.adresse}</p>
+              {l.telephones.length > 0 && <p><Icone nom="telephone" taille={20} couleur="var(--primaire)" /><span class="lx__tels">{l.telephones.map((t) => <a href={tel(t)}>{t}</a>)}</span></p>}
+              {l.email && <p><Icone nom="mail" taille={20} couleur="var(--primaire)" /><a class="lx__fort" href={`mailto:${l.email}`}>{l.email}</a></p>}
+              <p class="lx__horaires">{l.horaires ? <Fragment set:html={enLigne(l.horaires)} /> : <mark class="todo">[À compléter : horaires d’ouverture — {l.nom}]</mark>}</p>
+            </div>
+            {l.itineraire && <a class="btn btn--secondaire lx__iti" href={l.itineraire} rel="noopener">{t(lang).itineraire}</a>}
+          </article>
+        ))}
+      </div>
+      {sansAdresse.map((l) => (
+        <article class="lx__bande">
+          <div>
+            <h2>{l.nom}</h2>
+            {l.description && <p set:html={enLigne(l.description)} />}
+          </div>
+          <Bouton bouton={l.rendezVous} />
+        </article>
+      ))}
+    </Fragment>
+  )}
+</Sec>
+
+<style>
+  .lx__tels { display: flex; flex-direction: column; gap: 4px; font-weight: 700; }
+  .lx__tels a, .lx__fort { text-decoration: none; font-weight: 700; }
+  .carte .lx__tels { color: var(--texte); }
+  .lx__detail { border-radius: 28px; padding: clamp(28px, 3.5vw, 40px); gap: 20px; }
+  .lx__detail h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .lx__infos { display: flex; flex-direction: column; gap: 14px; }
+  .lx__infos p { display: flex; gap: 12px; font-size: 17px; line-height: 1.5; color: var(--texte); }
+  .lx__infos :global(svg) { flex: none; margin-top: 2px; }
+  .lx__infos .lx__horaires { color: var(--texte-pale); }
+  .lx__iti { align-self: flex-start; }
+  .lx__bande { background: var(--vert-clair); border-radius: 28px; padding: 36px 40px; display: flex; flex-wrap: wrap; gap: 16px 40px; align-items: center; justify-content: space-between; }
+  .lx__bande > div { display: flex; flex-direction: column; gap: 8px; max-width: 760px; }
+  .lx__bande h2 { margin: 0; font-size: 24px; font-weight: 800; }
+  .lx__bande p { margin: 0; font-size: 17px; line-height: 1.6; color: var(--vert-texte); }
+</style>

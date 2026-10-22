@@ -7,6 +7,10 @@ import { fiche } from '../moyo/site';
 const e = fiche.editeur;
 const h = fiche.hebergeur;
 const societe = /\b(SARL|SAS|SASU|SA|EURL|SCI|SNC)\b/i.test(e.formeJuridique);
+// Association : identifiée par son numéro RNA (W + 9 chiffres) ; SIRET seulement si elle en a un (non obligatoire).
+// Son directeur de la publication est de plein droit son représentant légal (art. 93-2 loi n° 82-652 ; Cass. crim. 22 janv. 2019, n° 18-81.779).
+const association = /association/i.test(e.formeJuridique);
+const prefixeRna = association && e.immatriculation && !/RNA/i.test(e.immatriculation) ? 'N° RNA : ' : '';
 const host = new URL(fiche.site.url).hostname;
 ---
 
@@ -17,15 +21,26 @@ const host = new URL(fiche.site.url).hostname;
   {e.nomCommercial && <Fragment> ({e.nomCommercial})</Fragment>}<br />
   Forme juridique : <Field v={e.formeJuridique} label="forme juridique" />
   {societe && <Fragment>, au capital de <Field v={e.capital} label="capital social" /></Fragment>}<br />
-  Représentant : <Field v={e.representant} label="nom et prénom du représentant" /><br />
-  Adresse : <Field v={e.adresse} label="adresse du siège ou du domicile professionnel" /><br />
-  SIRET : <Field v={e.siret} label="SIRET" /><br />
-  <Field v={e.immatriculation} label="immatriculation (RCS, RNE, RNA…)" /><br />
+  {association
+    ? <Fragment>Représentant légal : <Field v={e.representant} label="nom et prénom du représentant légal désigné par les statuts" /><br /></Fragment>
+    : <Fragment>Représentant : <Field v={e.representant} label="nom et prénom du représentant" /><br /></Fragment>}
+  Adresse : <Field v={e.adresse} label={association ? 'adresse du siège social' : 'adresse du siège ou du domicile professionnel'} /><br />
+  {association
+    ? <Fragment>{prefixeRna}<Field v={e.immatriculation} label="numéro RNA (W suivi de 9 chiffres, figurant sur le récépissé de la préfecture)" /><br /></Fragment>
+    : <Fragment><Field v={e.immatriculation} label="immatriculation (RCS, RNE…)" /><br /></Fragment>}
+  {association
+    ? (e.siret ? <Fragment>SIRET : {e.siret}<br /></Fragment> : null)
+    : <Fragment>SIRET : <Field v={e.siret} label="SIRET" /><br /></Fragment>}
   {e.tvaIntracom ? <Fragment>N° de TVA intracommunautaire : {e.tvaIntracom}<br /></Fragment> : null}
   Téléphone : <Field v={e.telephone} label="téléphone" /><br />
   E-mail : {e.email ? <a href={`mailto:${e.email}`}>{e.email}</a> : <Field v="" label="e-mail" />}
 </p>
-<p>Directeur de la publication : <Field v={e.directeurPublication} label="directeur de la publication" /></p>
+<p>
+  Directeur de la publication : <Field
+    v={e.directeurPublication}
+    label={association ? 'directeur de la publication (le représentant légal de l’association)' : 'directeur de la publication'}
+  />
+</p>
 
 <h2>Hébergeur</h2>
 <p>

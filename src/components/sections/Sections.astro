@@ -1,0 +1,52 @@
+---
+// Affiche les sections d'une page (champ « sections » du front matter, modèles TinaCMS de tina/config.ts).
+import { getEntry } from 'astro:content';
+import type { Section } from '../../content.config';
+import type { Langue } from '../../moyo/fiche';
+import { langueDefaut, prefixe } from '../../moyo/site';
+import { t } from '../../i18n/ui';
+import Accroche from './Accroche.astro';
+import Bandeau from './Bandeau.astro';
+import Cartes from './Cartes.astro';
+import Colonnes from './Colonnes.astro';
+import Chiffres from './Chiffres.astro';
+import Lieux from './Lieux.astro';
+import Faq from './Faq.astro';
+import Liens from './Liens.astro';
+import Equipe from './Equipe.astro';
+import Partenaires from './Partenaires.astro';
+import Encart from './Encart.astro';
+import Formulaire from './Formulaire.astro';
+import Appel from './Appel.astro';
+import Texte from './Texte.astro';
+
+interface Props {
+  sections: Section[];
+  lang: Langue;
+  /** Libellé de la page dans le fil d'Ariane. */
+  page: string;
+}
+const { sections, lang, page } = Astro.props;
+const reglages = (await getEntry('reglages', lang)) ?? (await getEntry('reglages', langueDefaut));
+if (!reglages) throw new Error(`Réglages absents : content/reglages/${lang}.md`);
+const r = reglages.data;
+const tx = t(lang);
+const ariane = { accueil: tx.accueil, href: `${prefixe(lang)}/`, page };
+---
+
+{sections.map((s) => (
+  s._template === 'accroche' ? <Accroche s={s} /> :
+  s._template === 'bandeau' ? <Bandeau s={s} ariane={ariane} lang={lang} /> :
+  s._template === 'cartes' ? <Cartes s={s} lang={lang} /> :
+  s._template === 'colonnes' ? <Colonnes s={s} /> :
+  s._template === 'chiffres' ? <Chiffres s={s} /> :
+  s._template === 'lieux' ? <Lieux s={s} lieux={r.lieux} lang={lang} /> :
+  s._template === 'faq' ? <Faq s={s} /> :
+  s._template === 'liens' ? <Liens s={s} /> :
+  s._template === 'equipe' ? <Equipe s={s} /> :
+  s._template === 'partenaires' ? <Partenaires s={s} /> :
+  s._template === 'encart' ? <Encart s={s} /> :
+  s._template === 'formulaire' ? <Formulaire s={s} lang={lang} /> :
+  s._template === 'appel' ? <Appel s={s} appel={r.appel} /> :
+  <Texte s={s} />
+))}

@@ -50,9 +50,13 @@ jobs:
         if: github.event_name != 'pull_request'
         run: npm run check:prod
 
+      # `npm run build:cms` ne déclenche pas le script `prebuild` (npm ne lance que `prebuild:cms`) :
+      # sans cette copie, public/tarteaucitron/ (non suivi par git) manquerait → pas de bandeau cookies.
       - name: Build avec l'espace d'édition TinaCMS
         if: env.TINA_CLIENT_ID != '' && env.TINA_TOKEN != ''
-        run: npm run build:cms
+        run: |
+          node scripts/copy-tarteaucitron.mjs
+          npm run build:cms
       - name: Build sans espace d'édition (identifiants TinaCloud absents)
         if: env.TINA_CLIENT_ID == '' || env.TINA_TOKEN == ''
         run: npm run build
@@ -67,6 +71,9 @@ jobs:
           name: site
           path: dist/
           retention-days: 7
+          # Depuis upload-artifact v4.4, les fichiers cachés sont exclus par défaut : sans cette ligne,
+          # dist/.htaccess (page 404, cache, noindex de /admin/) ne serait jamais envoyé sur le serveur.
+          include-hidden-files: true
 
   deploy:
     needs: build
@@ -87,8 +94,8 @@ jobs:
             exit 1
           fi
       - name: Envoi FTPS
-        # SamKirkland/FTP-Deploy-Action v4.4.0, épinglée sur son commit.
-        uses: SamKirkland/FTP-Deploy-Action@3a9c65ae0fc12ac924ccef8afc26941cc43aad0b
+        # SamKirkland/FTP-Deploy-Action v4.4.0, épinglée sur le commit du tag v4.4.0 (publié le 23/04/2026).
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}

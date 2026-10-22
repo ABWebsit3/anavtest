@@ -1,0 +1,51 @@
+---
+// Encart mis en avant : texte + bouton (ex. brochure à télécharger) ou texte + bloc d'information à droite.
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import Bouton from './Bouton.astro';
+import { enBlocs } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'encart'>;
+}
+const { s } = Astro.props;
+const couleur = s.couleur ?? 'blanc';
+---
+
+<Sec ancre={s.ancre} fond={s.fond} defaut="gris" class="enc-sec">
+  <div class:list={['enc', `enc--${couleur}`, s.aside?.texte && 'enc--aside']}>
+    <div class="enc__principal">
+      {s.document && <span class="enc__doc" aria-hidden="true">PDF</span>}
+      <div class="enc__texte">
+        {s.surtitre && <p class="surtitre">{s.surtitre}</p>}
+        <h2>{s.titre}</h2>
+        {s.texte && <Fragment set:html={enBlocs(s.texte)} />}
+      </div>
+    </div>
+    {s.aside?.texte ? (
+      <div class="enc__aside">
+        {s.aside.titre && <h3>{s.aside.titre}</h3>}
+        <Fragment set:html={enBlocs(s.aside.texte)} />
+      </div>
+    ) : (
+      <Bouton bouton={s.bouton} style="secondaire" />
+    )}
+  </div>
+</Sec>
+
+<style>
+  .enc { border-radius: 28px; padding: clamp(28px, 4vw, 48px); display: flex; flex-wrap: wrap; gap: 24px 40px; align-items: center; justify-content: space-between; }
+  .enc--blanc { background: #fff; border: 1px solid var(--bordure); }
+  :global(.sec:not(.sec--gris)) .enc--blanc { background: var(--fond); border-color: transparent; }
+  .enc--vert { background: var(--vert-clair); }
+  .enc--bleu { background: var(--bleu-clair); }
+  .enc--aside { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); align-items: start; }
+  .enc__principal { display: flex; gap: 24px; align-items: center; }
+  .enc__doc { flex: none; width: 64px; height: 80px; border-radius: 10px; background: var(--bleu-clair); display: grid; place-items: center; color: var(--primaire); font-weight: 800; font-size: 14px; }
+  .enc__texte { display: flex; flex-direction: column; gap: 12px; }
+  .enc h2 { margin: 0; font-size: clamp(24px, 3vw, 32px); line-height: 1.2; letter-spacing: -0.02em; font-weight: 800; }
+  .enc--blanc:not(.enc--aside) h2 { font-size: 24px; }
+  .enc :global(p) { margin: 0; font-size: 17px; line-height: 1.65; color: var(--texte-doux); }
+  .enc__aside { background: var(--bleu-clair); border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 10px; }
+  .enc__aside h3 { margin: 0; font-size: 20px; font-weight: 700; }
+  .enc__aside :global(p) { font-size: 16px; line-height: 1.6; }
+</style>

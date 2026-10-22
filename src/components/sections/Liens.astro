@@ -1,0 +1,36 @@
+---
+// Numéros et liens utiles : grandes tuiles cliquables (numéro de téléphone ou site).
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import { enBlocs, tel } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'liens'>;
+}
+const { s } = Astro.props;
+const href = (url: string | null | undefined, valeur: string) => url ? (/^[\d\s+.]+$/.test(url) ? tel(url) : url) : tel(valeur);
+---
+
+<Sec ancre={s.ancre} fond={s.fond} defaut="gris">
+  {s.titre && <h2 class="h2">{s.titre}</h2>}
+  <div class="grille" style="--min:260px">
+    {s.liens.map((l) => (
+      <a class="lien" href={href(l.url, l.valeur)}>
+        <span class:list={['lien__valeur', /^[\d\s·]+$/.test(l.valeur) && 'lien__valeur--num']}>{l.valeur}</span>
+        {l.texte && <span class="lien__texte">{l.texte}</span>}
+      </a>
+    ))}
+  </div>
+  {s.note && <div class="lead lien__note" set:html={enBlocs(s.note)} />}
+</Sec>
+
+<style>
+  .grille { gap: 20px; }
+  .lien { background: #fff; border: 1px solid var(--bordure); border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: var(--texte); }
+  :global(.sec:not(.sec--gris)) .lien { background: var(--fond); border-color: transparent; }
+  .lien:hover { border-color: var(--primaire); }
+  .lien__valeur { font-size: 20px; font-weight: 800; color: var(--primaire); }
+  .lien__valeur--num { font-size: 32px; line-height: 1.2; }
+  .lien__texte { font-size: 16px; line-height: 1.5; color: var(--texte-doux); }
+  .lien__note :global(p) { font-size: 16px; }
+  .lien__note :global(a) { font-weight: 700; }
+</style>

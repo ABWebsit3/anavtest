@@ -1,7 +1,11 @@
 ---
-import { getCollection } from 'astro:content';
-import { fiche, projet, decouper, urlPage, prefixe } from '../moyo/site';
+// En-tête : bandeau d'urgence (« Quitter rapidement le site »), logo, menu des pages, bouton d'appel, langues.
+// Textes et numéros : réglages communs (content/reglages/<langue>.md).
+import { getCollection, getEntry } from 'astro:content';
+import { fiche, projet, decouper, urlPage, prefixe, langueDefaut } from '../moyo/site';
 import { t } from '../i18n/ui';
+import { enLigne, tel } from '../moyo/texte';
+import Icone from './Icone.astro';
 import type { Langue } from '../moyo/fiche';
 
 interface Props {
@@ -9,41 +13,119 @@ interface Props {
   alternates: { lang: Langue; href: string }[];
 }
 const { lang, alternates } = Astro.props;
+const tx = t(lang);
+const r = ((await getEntry('reglages', lang)) ?? (await getEntry('reglages', langueDefaut)))?.data;
 const menu = (await getCollection('pages'))
   .filter((p) => decouper(p.id).lang === lang && p.data.menu)
   .sort((a, b) => a.data.ordre - b.data.ordre);
 const autres = fiche.site.langues.filter((l) => l !== lang);
 const lien = (l: Langue) => alternates.find((a) => a.lang === l)?.href ?? `${prefixe(l)}/`;
+const courant = (href: string) => Astro.url.pathname === href || (href !== `${prefixe(lang)}/` && Astro.url.pathname.startsWith(href));
 ---
 
 <header class="hd">
+  {r?.bandeau && (
+    <div class="hd__bandeau">
+      <div class="container hd__bandeau-in">
+        {r.bandeau.texte && <p>{r.bandeau.texte}</p>}
+        <div class="hd__urgence">
+          {r.bandeau.urgence && <span set:html={enLigne(r.bandeau.urgence)} />}
+          {r.bandeau.quitter?.libelle && r.bandeau.quitter.url && (
+            <a class="hd__quitter" href={r.bandeau.quitter.url} data-quitter>{r.bandeau.quitter.libelle}</a>
+          )}
+        </div>
+      </div>
+    </div>
+  )}
   <div class="container hd__in">
-    <a class="hd__logo" href={`${prefixe(lang)}/`}>{fiche.site.nom}</a>
-    <nav aria-label={t(lang).menu}>
-      <ul class="hd__nav">
-        {menu.map((p) => <li><a href={urlPage(p.id)} aria-current={Astro.url.pathname === urlPage(p.id) ? 'page' : undefined}>{p.data.menu}</a></li>)}
-        {projet.has('ecom') && <li><a href={`${prefixe(lang)}/boutique/`} aria-current={Astro.url.pathname.startsWith(`${prefixe(lang)}/boutique/`) ? 'page' : undefined}>{t(lang).boutique}</a></li>}
-      </ul>
-    </nav>
-    {projet.has('ecom') && (
-      <button type="button" class="hd__panier snipcart-checkout">
-        {t(lang).panier} (<span class="snipcart-items-count">0</span>)
-      </button>
-    )}
-    {autres.length > 0 && (
-      <ul class="hd__langs" aria-label={t(lang).changerLangue}>
-        {autres.map((l) => <li><a href={lien(l)} hreflang={l} lang={l}>{t(l).nomLangue}</a></li>)}
-      </ul>
-    )}
+    <a class="hd__logo" href={`${prefixe(lang)}/`}>
+      {r?.logo.image ? <img src={r.logo.image} alt="" height="48" /> : r?.logo.sigle && <span class="hd__sigle" aria-hidden="true">{r.logo.sigle}</span>}
+      <span class="hd__nom"><span>{r?.logo.nom ?? fiche.site.nom}</span>{r?.logo.sousTitre && <Fragment>{' '}<span class="hd__sous-titre">{r.logo.sousTitre}</span></Fragment>}</span>
+      <span class="hd__masque">, {tx.retourAccueil.toLowerCase()}</span>
+    </a>
+    <button type="button" class="hd__burger" aria-expanded="false" aria-controls="hd-menu">
+      <span class="hd__burger-icone" aria-hidden="true"></span><span class="hd__burger-texte">{tx.ouvrirMenu}</span>
+    </button>
+    <div class="hd__menu" id="hd-menu">
+      <nav aria-label={tx.menu}>
+        <ul class="hd__nav">
+          {menu.map((p) => <li><a href={urlPage(p.id)} aria-current={courant(urlPage(p.id)) ? 'page' : undefined}>{p.data.menu}</a></li>)}
+          {projet.has('ecom') && <li><a href={`${prefixe(lang)}/boutique/`} aria-current={Astro.url.pathname.startsWith(`${prefixe(lang)}/boutique/`) ? 'page' : undefined}>{tx.boutique}</a></li>}
+        </ul>
+      </nav>
+      {projet.has('ecom') && (
+        <button type="button" class="hd__panier snipcart-checkout">
+          {tx.panier} (<span class="snipcart-items-count">0</span>)
+        </button>
+      )}
+      {autres.length > 0 && (
+        <ul class="hd__langs" aria-label={tx.changerLangue}>
+          {autres.map((l) => <li><a href={lien(l)} hreflang={l} lang={l}>{t(l).nomLangue}</a></li>)}
+        </ul>
+      )}
+      {r?.telephone && <a class="btn hd__tel" href={tel(r.telephone)} aria-label={`${tx.appeler} ${r.telephone}`}><Icone nom="telephone" />{r.telephone}</a>}
+    </div>
   </div>
 </header>
 
+<script>
+  // « Quitter rapidement » : remplace la page dans l'historique (le bouton Retour ne ramène pas sur le site).
+  document.querySelectorAll<HTMLAnchorElement>('[data-quitter]').forEach((a) =>
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      location.replace(a.href);
+    }),
+  );
+  // Menu mobile.
+  const bouton = document.querySelector<HTMLButtonElement>('.hd__burger');
+  bouton?.addEventListener('click', () => {
+    const ouvert = bouton.getAttribute('aria-expanded') !== 'true';
+    bouton.setAttribute('aria-expanded', String(ouvert));
+  });
+</script>
+
 <style>
-  .hd { border-bottom: 1px solid color-mix(in srgb, var(--texte) 15%, transparent); }
-  .hd__in { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding-block: 16px; }
-  .hd__logo { font-weight: 800; font-size: 20px; color: var(--texte); text-decoration: none; margin-right: auto; }
-  .hd__nav, .hd__langs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
-  .hd__nav a, .hd__langs a { color: var(--texte); text-decoration: none; font-weight: 600; }
-  .hd__nav a[aria-current] { color: var(--primaire); }
+  .hd { background: #fff; border-bottom: 1px solid var(--bordure); }
+  .hd__bandeau { background: var(--primaire-fonce); color: #fff; font-size: 14px; }
+  .hd__bandeau-in { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: space-between; padding-block: 8px; }
+  .hd__bandeau p { margin: 0; }
+  .hd__urgence { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+  .hd__urgence :global(a) { color: #fff; font-weight: 700; }
+  .hd__quitter { background: var(--accent); color: var(--texte) !important; font-weight: 700; text-decoration: none; padding: 6px 14px; border-radius: 999px; }
+  .hd__quitter:hover { background: #fff; }
+  .hd__in { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; justify-content: space-between; padding-block: 16px; }
+  .hd__logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--texte); }
+  .hd__sigle { width: 48px; height: 48px; border-radius: 14px; background: var(--primaire); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; }
+  .hd__nom { display: flex; flex-direction: column; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; line-height: 1.25; }
+  /* Texte lu par les lecteurs d'écran seulement : le nom accessible du lien reprend ainsi le texte visible (WCAG 2.5.3). */
+  .hd__masque { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .hd__sous-titre { font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--texte-pale); }
+  .hd__menu { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .hd__nav, .hd__langs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .hd__tel { padding-inline: 20px; }
+  .hd__nav a, .hd__langs a { color: var(--texte); text-decoration: none; font-weight: 600; font-size: 15px; padding: 10px 2px; display: inline-block; }
+  .hd__nav a:hover { color: var(--primaire); }
+  .hd__nav a[aria-current] { color: var(--primaire); box-shadow: inset 0 -2px 0 var(--primaire); }
   .hd__panier { font: inherit; font-weight: 700; background: none; border: 2px solid currentColor; border-radius: 999px; padding: 4px 14px; color: var(--texte); cursor: pointer; }
+  .hd__burger { display: none; }
+  @media (max-width: 1100px) {
+    .hd__burger { display: inline-flex; align-items: center; gap: 10px; font: inherit; font-weight: 700; background: none; border: 1.5px solid var(--bordure-forte); border-radius: 999px; padding: 10px 18px; color: var(--texte); cursor: pointer; }
+    .hd__burger-icone, .hd__burger-icone::before, .hd__burger-icone::after { display: block; width: 18px; height: 2px; background: currentColor; position: relative; }
+    .hd__burger-icone::before, .hd__burger-icone::after { content: ''; position: absolute; left: 0; }
+    .hd__burger-icone::before { top: -6px; }
+    .hd__burger-icone::after { top: 6px; }
+    .hd__menu { display: none; flex-basis: 100%; flex-direction: column; align-items: stretch; gap: 12px; padding-top: 8px; }
+    .hd__burger[aria-expanded='true'] + .hd__menu { display: flex; }
+    .hd__nav { flex-direction: column; }
+    .hd__nav a { padding: 10px 0; }
+    .hd__tel { align-self: flex-start; }
+  }
+  @media (max-width: 420px) {
+    .hd__burger { padding: 14px; }
+    .hd__burger-texte { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
+  @media (scripting: none) {
+    .hd__burger { display: none; }
+    .hd__menu { display: flex; }
+  }
 </style>

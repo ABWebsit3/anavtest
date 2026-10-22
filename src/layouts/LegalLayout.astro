@@ -11,11 +11,13 @@ const { titre, description } = Astro.props;
 ---
 
 <Layout titre={titre} description={description} lang="fr">
+  <div class="container page-simple">
   <article class="prose legal">
     <h1>{titre}</h1>
     <p class="legal__date">Dernière mise à jour : <Field v={fiche.dateMiseAJourLegale} label="date de mise à jour" /></p>
     <slot />
   </article>
+  </div>
 </Layout>
 
 <style>

@@ -1,0 +1,55 @@
+---
+// Partenaires : grandes cartes (logo, nom, texte, lien) ou vignettes (logo + nom).
+// Un logo manquant affiche « [À compléter] » (bloque la mise en ligne).
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import { enBlocs } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'partenaires'>;
+}
+const { s } = Astro.props;
+const grand = s.format === 'grand';
+---
+
+<Sec ancre={s.ancre} fond={s.fond}>
+  {(s.titre || s.texte) && (
+    <div class="sec__tete">
+      {s.titre && <h2 class="h2">{s.titre}</h2>}
+      {s.texte && <div class="lead" set:html={enBlocs(s.texte)} />}
+    </div>
+  )}
+  {grand ? (
+    <div class="grille" style="--min:440px">
+      {s.partenaires.map((p) => (
+        <article class="carte pa pa--grand">
+          <div class="pa__logo">{p.logo ? <img src={p.logo} alt={`Logo ${p.nom}`} loading="lazy" /> : <mark class="todo">[À compléter : logo {p.nom}]</mark>}</div>
+          <h3>{p.nom}</h3>
+          {p.texte && <Fragment set:html={enBlocs(p.texte)} />}
+          {p.lien?.libelle && p.lien.url && <a class="pa__lien" href={p.lien.url} rel="noopener">{p.lien.libelle}</a>}
+        </article>
+      ))}
+    </div>
+  ) : (
+    <ul class="grille pa__vignettes" style="--min:220px">
+      {s.partenaires.map((p) => (
+        <li class="carte pa">
+          <div class="pa__logo">{p.logo ? <img src={p.logo} alt="" loading="lazy" /> : <mark class="todo">[À compléter : logo]</mark>}</div>
+          <p class="pa__nom">{p.lien?.url ? <a href={p.lien.url} rel="noopener">{p.nom}</a> : p.nom}</p>
+        </li>
+      ))}
+    </ul>
+  )}
+</Sec>
+
+<style>
+  .pa__vignettes { margin: 0; padding: 0; list-style: none; gap: 16px; }
+  .pa { padding: 20px; border-radius: 20px; gap: 14px; }
+  .pa--grand { padding: clamp(28px, 3.5vw, 40px); border-radius: 28px; gap: 20px; }
+  .pa--grand h3 { font-size: 24px; font-weight: 800; }
+  .pa--grand :global(p) { font-size: 17px; line-height: 1.65; }
+  .pa__logo { background: #fff; border-radius: 12px; height: 96px; display: grid; place-items: center; padding: 12px; font-size: 13px; }
+  .pa__logo img { max-height: 72px; width: auto; }
+  .pa .pa__nom { font-size: 15px; font-weight: 700; color: var(--texte); }
+  .pa__nom a { color: inherit; text-decoration: none; }
+  .pa__lien { font-weight: 700; }
+</style>

@@ -1,30 +1,30 @@
 {
   "legal": {
     "fait": false,
-    "note": ""
+    "note": "Relu le 22/10/2026, non coché : manquent représentant légal, n° RNA, directeur de la publication (= représentant légal), date de mise à jour ; confirmer adresse du siège, SIRET éventuel, durée de conservation des messages (3 ans par défaut) ; téléphone Hostinger (LCEN art. 1-1) ; logos du pied de page ([À compléter] sur les pages légales)."
   },
   "seo-technique": {
-    "fait": false,
-    "note": ""
+    "fait": true,
+    "note": "Vérifié le 22/10/2026 : Lighthouse local mobile perf 98-100, accessibilité 96-100 (contraste des seuls « [À compléter] »), bonnes pratiques 100, SEO 100 ; JSON-LD NGO + lieux, WebSite, BreadcrumbList (validator.schema.org : 0 erreur). Restent côté client : domaine définitif (URL de test, bloquée par check:prod ; rebuild suffit), logo et image de partage (og:image absente, favicon « AJ » provisoire), horaires des lieux, photos (WebP ≤ 300 Ko)."
   },
   "seo-contenu": {
-    "fait": false,
-    "note": ""
+    "fait": true,
+    "note": "Fait le 22/10/2026 (SEO de base, à valider par le client). Mots-clés par page : accueil « aide aux victimes Narbonne » ; aide-aux-victimes « accompagnement des victimes Narbonne » ; association « association ANAV-AJ » (requête de marque) ; partenaires « partenaires aide aux victimes Aude » ; actions-missions « stage de responsabilisation Narbonne » ; contact « bureau d'aide aux victimes Narbonne ». Articles (3/3, sourcés Service-Public.fr) : victime-infraction-premieres-demarches « victime d'une infraction que faire » ; porter-plainte-partie-civile « se constituer partie civile » ; indemnisation-victime-civi-sarvi « indemnisation victime CIVI ». Titres ≤ 60 car. affichés, descriptions ≤ 151, 1 H1/page, 4 liens internes ajoutés dans des champs existants. Articles et choix de mots-clés à relire et valider par l'association ; page /blog/ non reliée au menu (défaut du modèle)."
   },
   "traduction": {
     "fait": false,
-    "note": ""
+    "note": "En attente de la décision du client sur la langue supplémentaire de l'option multilingue incluse (site.langues = ['fr']). Diagnostic du 22/10/2026 : le site est prêt à recevoir une langue (ui.ts complet avec en, réglages par langue, Tina, hreflang, tarteaucitron). Restent à prévoir le jour venu : reglages/<langue>.md (non contrôlé par check), 3 libellés du pied de page codés en dur en français, liens internes à préfixer."
   },
   "option:ana": {
     "fait": false,
-    "note": ""
+    "note": "Non coché le 22/10/2026 : intégration site livrée et vérifiée, mais ni propriété GA4 ni rapport. Livré : GA4 via tarteaucitron (gtag, PUBLIC_GA4_ID lu au build), signaux Google et personnalisation publicitaire coupés dans le code avant le config, conservation GA4 citée dans la confidentialité (champ ga4Conservation, sinon [À compléter]). Playwright avec un ID de test : aucune requête Google ni cookie _ga avant acceptation, refus respecté, npa=1 sur les hits ; sans ID : ni bandeau ni erreur. Formulaire en POST : seul ?contact=ok|erreur apparaît dans les URL. Reste (client/ABweb) : propriété GA4 au nom de l'association avec accès Moyo ; secret GitHub PUBLIC_GA4_ID ; dans la propriété : conservation 2 ou 14 mois (à reporter dans ga4Conservation), signaux Google désactivés, aucune liaison Google Ads, partage des données désactivé, masquage des e-mails actif ; événement clé « contact » (page_view avec contact=ok dans page_location) ; tableau de bord (visites, pages, sources, contacts) et fréquence à convenir ; nouveau test Playwright sur le site en ligne avec le vrai ID."
   },
   "recette": {
     "fait": false,
-    "note": ""
+    "note": "Recette du 22/10/2026, non cochée : techniquement OK (13 pages 200, 404 perso noindex, liens internes OK, formulaire et ?contact=ok|erreur OK, consentement GA4 testé avec un ID de test : 0 requête tierce avant accord, refus respecté, panneau rouvrable ; axe WCAG AA sans défaut hors marqueurs [À compléter] ; 375/1280 px sans défilement horizontal ; 6/6 pages, 3/3 articles). Bloque : check:prod (13 erreurs : données éditeur, date légale, URL définitive, ga4Conservation/PUBLIC_GA4_ID, multilingue à 1 langue, [À compléter] photos/horaires/logos/brochure/Secrétariat d'État). Corrigé : lien « Prendre rendez-vous » (tel:), nom accessible du logo, tableau défilant de la confidentialité, libellé du menu du pied. Reste : envoi PHP à tester en ligne, /blog/ non relié."
   },
   "deploiement": {
     "fait": false,
-    "note": ""
+    "note": "Préparation faite le 22/10/2026 (site non en ligne) ; restent : données légales et choix de langue, domaine définitif au nom du client (DNS, HTTPS, www), secrets GitHub, FTPS Hostinger à confirmer, blocage check:prod sur cette case à lever, dry-run, puis contrôles en ligne."
   }
 }

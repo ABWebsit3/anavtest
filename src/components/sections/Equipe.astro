@@ -1,0 +1,39 @@
+---
+// Membres (bureau, équipe) : photo ou initiales, fonction, nom, description.
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import { enBlocs, initiales } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'equipe'>;
+}
+const { s } = Astro.props;
+---
+
+<Sec ancre={s.ancre} fond={s.fond}>
+  {(s.titre || s.texte) && (
+    <div class="sec__tete">
+      {s.titre && <h2 class="h2">{s.titre}</h2>}
+      {s.texte && <div class="lead" set:html={enBlocs(s.texte)} />}
+    </div>
+  )}
+  <div class="grille" style="--min:300px">
+    {s.membres.map((m) => (
+      <article class="carte eq">
+        {m.photo ? <img class="eq__avatar" src={m.photo} alt="" width="64" height="64" loading="lazy" /> : <span class="eq__avatar" aria-hidden="true">{initiales(m.nom)}</span>}
+        <div class="eq__texte">
+          {m.fonction && <p class="surtitre">{m.fonction}</p>}
+          <h3>{m.nom}</h3>
+          {m.description && <p>{m.description}</p>}
+        </div>
+      </article>
+    ))}
+  </div>
+</Sec>
+
+<style>
+  .eq { flex-direction: row; align-items: center; gap: 20px; }
+  .eq__avatar { flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--primaire); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 20px; object-fit: cover; }
+  .eq__texte { display: flex; flex-direction: column; gap: 4px; }
+  .eq h3 { font-size: 20px; }
+  .eq .eq__texte p:last-child:not(.surtitre) { font-size: 15px; }
+</style>

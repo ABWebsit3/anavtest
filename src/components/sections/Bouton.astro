@@ -1,0 +1,19 @@
+---
+// Bouton saisi dans TinaCMS. Un libellé sans lien affiche « [À compléter] » (bloque la mise en ligne).
+import { tel } from '../../moyo/texte';
+interface Props {
+  bouton?: { libelle?: string | null; url?: string | null; style?: 'primaire' | 'secondaire' | 'clair' | null } | null;
+  style?: 'primaire' | 'secondaire' | 'clair';
+  class?: string;
+}
+const { bouton, style, class: classe } = Astro.props;
+const s = bouton?.style ?? style ?? 'primaire';
+// Un numéro saisi seul (« 04 68 41 40 97 ») devient un lien d'appel.
+const href = bouton?.url && /^[\d\s+.]+$/.test(bouton.url) ? tel(bouton.url) : bouton?.url;
+---
+
+{bouton?.libelle && (
+  href
+    ? <a class:list={['btn', s !== 'primaire' && `btn--${s}`, classe]} href={href}><slot />{bouton.libelle}</a>
+    : <mark class="todo">[À compléter : lien du bouton « {bouton.libelle} »]</mark>
+)}

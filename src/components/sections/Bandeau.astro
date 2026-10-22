@@ -1,0 +1,37 @@
+---
+// En-tête des pages intérieures : fil d'Ariane, titre principal (h1), introduction et sommaire.
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import { t } from '../../i18n/ui';
+import type { Langue } from '../../moyo/fiche';
+import { enBlocs } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'bandeau'>;
+  ariane: { accueil: string; href: string; page: string };
+  lang: Langue;
+}
+const { s, ariane, lang } = Astro.props;
+const tx = t(lang);
+---
+
+<Sec ancre={s.ancre} fond={s.fond} defaut="bleu" class="bdo">
+  <nav aria-label={tx.filAriane} class="bdo__ariane"><a href={ariane.href}>{ariane.accueil}</a><span aria-hidden="true">/</span><span aria-current="page">{ariane.page}</span></nav>
+  <h1>{s.titre}</h1>
+  {s.texte && <div class="bdo__intro" set:html={enBlocs(s.texte)} />}
+  {s.sommaire.length > 0 && (
+    <nav class="bdo__sommaire" aria-label={tx.surCettePage}>
+      {s.sommaire.map((x) => <a href={`#${x.ancre.replace(/^#/, '')}`}>{x.libelle}</a>)}
+    </nav>
+  )}
+</Sec>
+
+<style>
+  .bdo { padding-block: 56px clamp(56px, 6vw, 72px); }
+  .bdo :global(.sec__in) { gap: 20px; }
+  .bdo__ariane { font-size: 14px; color: var(--texte-doux); display: flex; gap: 8px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: clamp(34px, 4.8vw, 52px); line-height: 1.1; letter-spacing: -0.03em; font-weight: 800; max-width: 960px; }
+  .bdo__intro :global(p) { margin: 0; font-size: clamp(18px, 1.6vw, 20px); line-height: 1.6; color: var(--texte-doux); max-width: 800px; }
+  .bdo__sommaire { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .bdo__sommaire a { color: var(--texte); text-decoration: none; font-weight: 600; font-size: 15px; padding: 10px 18px; border-radius: 999px; background: #fff; border: 1px solid var(--bordure-forte); }
+  .bdo__sommaire a:hover { border-color: var(--primaire); color: var(--primaire); }
+</style>

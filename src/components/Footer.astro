@@ -1,6 +1,9 @@
 ---
-import { fiche, projet } from '../moyo/site';
+// Pied de page : présentation, contacts, plan du site, agréments (réglages communs) + liens légaux et cookies.
+import { getCollection, getEntry } from 'astro:content';
+import { fiche, projet, decouper, urlPage, langueDefaut } from '../moyo/site';
 import { t } from '../i18n/ui';
+import { enBlocs, tel } from '../moyo/texte';
 import type { Langue } from '../moyo/fiche';
 
 interface Props {
@@ -8,10 +11,40 @@ interface Props {
 }
 const { lang } = Astro.props;
 const tx = t(lang);
+const r = ((await getEntry('reglages', lang)) ?? (await getEntry('reglages', langueDefaut)))?.data;
+const menu = (await getCollection('pages'))
+  .filter((p) => decouper(p.id).lang === lang && p.data.menu)
+  .sort((a, b) => a.data.ordre - b.data.ordre);
+const href = (url: string) => (/^[\d\s+.]+$/.test(url) ? tel(url) : url);
 ---
 
 <footer class="ft">
-  <div class="container ft__in">
+  <div class="container ft__colonnes">
+    <div class="ft__col">
+      <p class="ft__nom">{r?.logo.nom ?? fiche.site.nom}</p>
+      {r?.pied.presentation && <div class="ft__presentation" set:html={enBlocs(r.pied.presentation)} />}
+    </div>
+    {r && r.pied.contacts.length > 0 && (
+      <div class="ft__col">
+        <p class="ft__titre">Nous joindre</p>
+        {r.pied.contacts.map((c) => <a class="ft__lien" href={href(c.url)}>{c.libelle}</a>)}
+      </div>
+    )}
+    <nav class="ft__col" aria-labelledby="ft-site">
+      <p class="ft__titre" id="ft-site">Le site</p>
+      {menu.map((p) => <a class="ft__lien" href={urlPage(p.id)}>{p.data.menu}</a>)}
+    </nav>
+    {r && r.pied.logos.length > 0 && (
+      <div class="ft__col">
+        {r.pied.titreLogos && <p class="ft__titre">{r.pied.titreLogos}</p>}
+        {r.pied.logos.map((l) => {
+          const contenu = l.image ? <img src={l.image} alt={l.nom} /> : <mark class="todo">[À compléter : logo {l.nom}]</mark>;
+          return l.url ? <a class="ft__logo" href={l.url} rel="noopener">{contenu}</a> : <span class="ft__logo">{contenu}</span>;
+        })}
+      </div>
+    )}
+  </div>
+  <div class="container ft__bas">
     <span>© {new Date().getFullYear()} {fiche.site.nom}</span>
     <a href="/mentions-legales/">{tx.mentionsLegales}</a>
     <a href="/confidentialite/">{tx.confidentialite}</a>
@@ -22,9 +55,18 @@ const tx = t(lang);
 </footer>
 
 <style>
-  .ft { margin-top: 80px; border-top: 1px solid color-mix(in srgb, var(--texte) 15%, transparent); font-size: 15px; }
-  .ft__in { display: flex; flex-wrap: wrap; gap: 10px 22px; padding-block: 24px; align-items: center; }
-  .ft a, .ft__cookies { color: inherit; }
-  .ft__cookies { background: none; border: 0; padding: 0; font: inherit; text-decoration: underline; cursor: pointer; }
-  .ft__moyo { margin-left: auto; opacity: .75; }
+  .ft { background: var(--primaire-fonce); color: var(--sur-sombre); font-size: 15px; }
+  .ft__colonnes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 40px; padding-block: 64px 40px; }
+  .ft__col { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .ft__nom { margin: 0 0 6px; font-weight: 800; font-size: 22px; color: #fff; }
+  .ft__presentation :global(p) { margin: 0; line-height: 1.6; }
+  .ft__titre { margin: 0 0 6px; font-weight: 700; color: #fff; }
+  .ft a { color: #fff; text-decoration: none; }
+  .ft a:hover { color: var(--accent); }
+  .ft__logo { align-self: stretch; background: #fff; border-radius: 12px; height: 64px; display: grid; place-items: center; padding: 8px; font-size: 13px; }
+  .ft__logo img { max-height: 48px; width: auto; }
+  .ft__bas { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; padding-block: 20px 32px; border-top: 1px solid #2A4565; font-size: 14px; }
+  .ft__bas a { text-decoration: underline; text-underline-offset: 3px; }
+  .ft__cookies { background: none; border: 0; padding: 0; font: inherit; color: #fff; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .ft__moyo { margin-left: auto; opacity: .8; }
 </style>

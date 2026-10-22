@@ -1,0 +1,17 @@
+---
+// Enveloppe commune des sections : fond, ancre (#…) et largeur du contenu.
+interface Props {
+  ancre?: string | null;
+  fond?: 'blanc' | 'gris' | 'bleu' | 'sombre' | null;
+  defaut?: 'blanc' | 'gris' | 'bleu' | 'sombre';
+  class?: string;
+}
+const { ancre, fond, defaut = 'blanc', class: classe } = Astro.props;
+const f = fond ?? defaut;
+---
+
+<section id={ancre || undefined} class:list={['sec', f !== 'blanc' && `sec--${f}`, classe]}>
+  <div class="container sec__in">
+    <slot />
+  </div>
+</section>

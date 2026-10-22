@@ -4,6 +4,7 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import ContactForm from '../components/ContactForm.astro';
+import Sections from '../components/sections/Sections.astro';
 import BoutonPanier from '../components/BoutonPanier.astro';
 import { fiche, projet, decouper, urlPage, urlArticle, urlProduit, prefixe } from '../moyo/site';
 import { t } from '../i18n/ui';
@@ -64,18 +65,25 @@ const dateFmt = (d: Date) => d.toLocaleDateString(lang, { dateStyle: 'long' });
 ---
 
 {vue.type === 'page' && (
-  <Layout titre={vue.entree.data.titre} description={vue.entree.data.description} lang={lang} alternates={alternates}>
-    <article class="prose">
-      <h1>{vue.entree.data.titre}</h1>
-      {Content && <Content />}
-    </article>
-    {vue.entree.data.formulaire && <ContactForm lang={lang} />}
+  <Layout titre={vue.entree.data.titre} description={vue.entree.data.description} lang={lang} alternates={alternates} ariane={vue.entree.data.sections.some((s) => s._template === 'bandeau') ? (vue.entree.data.menu ?? vue.entree.data.titre) : undefined}>
+    {vue.entree.data.sections.length > 0 && <Sections sections={vue.entree.data.sections} lang={lang} page={vue.entree.data.menu ?? vue.entree.data.titre} />}
+    {(vue.entree.data.sections.length === 0 || vue.entree.body?.trim() || vue.entree.data.formulaire) && (
+      <div class="container page-simple">
+        {(vue.entree.data.sections.length === 0 || vue.entree.body?.trim()) && (
+          <article class="prose">
+            {vue.entree.data.sections.length === 0 && <h1>{vue.entree.data.titre}</h1>}
+            {Content && <Content />}
+          </article>
+        )}
+        {vue.entree.data.formulaire && <ContactForm lang={lang} />}
+      </div>
+    )}
   </Layout>
 )}
 
 {vue.type === 'article' && (
   <Layout titre={vue.entree.data.titre} description={vue.entree.data.description} lang={lang} alternates={alternates} type="article">
-    <article class="prose">
+    <article class="container page-simple prose">
       <h1>{vue.entree.data.titre}</h1>
       <p><small>{tx.publieLe} <time datetime={vue.entree.data.date.toISOString()}>{dateFmt(vue.entree.data.date)}</time></small></p>
       {Content && <Content />}
@@ -85,6 +93,7 @@ const dateFmt = (d: Date) => d.toLocaleDateString(lang, { dateStyle: 'long' });
 
 {vue.type === 'blog' && (
   <Layout titre={tx.blog} description={`${tx.blog} · ${fiche.site.nom}`} lang={lang} alternates={alternates}>
+    <div class="container page-simple">
     <h1>{tx.blog}</h1>
     <ul class="blog">
       {vue.articles.map((a) => (
@@ -94,12 +103,13 @@ const dateFmt = (d: Date) => d.toLocaleDateString(lang, { dateStyle: 'long' });
         </li>
       ))}
     </ul>
+    </div>
   </Layout>
 )}
 
 {vue.type === 'produit' && (
   <Layout titre={vue.entree.data.nom} description={vue.entree.data.description} lang={lang} alternates={alternates}>
-    <article class="produit">
+    <article class="container page-simple produit">
       {vue.entree.data.image && <img src={vue.entree.data.image} alt={vue.entree.data.nom} width="560" loading="eager" />}
       <div class="prose">
         <h1>{vue.entree.data.nom}</h1>
@@ -115,8 +125,9 @@ const dateFmt = (d: Date) => d.toLocaleDateString(lang, { dateStyle: 'long' });
 
 {vue.type === 'boutique' && (
   <Layout titre={tx.boutique} description={`${tx.boutique} · ${fiche.site.nom}`} lang={lang} alternates={alternates}>
+    <div class="container page-simple">
     <h1>{tx.boutique}</h1>
-    <ul class="grille">
+    <ul class="boutique">
       {vue.produits.map((x) => (
         <li>
           {x.data.image && <img src={x.data.image} alt="" width="320" loading="lazy" />}
@@ -126,16 +137,17 @@ const dateFmt = (d: Date) => d.toLocaleDateString(lang, { dateStyle: 'long' });
         </li>
       ))}
     </ul>
+    </div>
   </Layout>
 )}
 
 <style>
   .produit { display: grid; gap: 32px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-items: start; }
-  .produit img, .grille img { border-radius: 12px; width: 100%; }
+  .produit img, .boutique img { border-radius: 12px; width: 100%; }
   .produit__prix { font-size: 22px; font-weight: 800; margin-bottom: 0; }
   .produit__mention { font-size: 14px; opacity: .75; margin-top: 2px; }
-  .grille { list-style: none; padding: 0; display: grid; gap: 28px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
-  .grille h2 { font-size: 20px; margin: 10px 0 4px; }
+  .boutique { list-style: none; padding: 0; display: grid; gap: 28px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+  .boutique h2 { font-size: 20px; margin: 10px 0 4px; }
   .blog { list-style: none; padding: 0; display: grid; gap: 24px; }
   .blog h2 { margin: 0 0 6px; font-size: 22px; }
 </style>

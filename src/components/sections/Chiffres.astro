@@ -1,0 +1,34 @@
+---
+// Bandeau de repères (fond sombre) : valeur mise en avant + texte, liseré jaune.
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import Bouton from './Bouton.astro';
+import { enLigne } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'chiffres'>;
+}
+const { s } = Astro.props;
+---
+
+<Sec ancre={s.ancre} fond={s.fond} defaut="sombre" class="chf">
+  {s.titre && <h2 class="h2 chf__titre">{s.titre}</h2>}
+  <div class="grille" style="--min:240px">
+    {s.chiffres.map((c) => (
+      <div class="chf__item">
+        <p class:list={['chf__valeur', c.valeur.length > 5 && 'chf__valeur--mot']}>{c.valeur}</p>
+        {c.texte && <p class="chf__texte" set:html={enLigne(c.texte)} />}
+      </div>
+    ))}
+  </div>
+  <Bouton bouton={s.bouton} style="clair" class="chf__bouton" />
+</Sec>
+
+<style>
+  .chf__titre { font-size: clamp(28px, 3.6vw, 36px); max-width: 760px; }
+  .chf .grille { gap: 32px; }
+  .chf__item { display: flex; flex-direction: column; gap: 10px; border-top: 2px solid var(--accent); padding-top: 20px; }
+  .chf__valeur { margin: 0; font-size: 40px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+  .chf__valeur--mot { font-size: 22px; letter-spacing: 0; }
+  .chf__texte { margin: 0; font-size: 16px; line-height: 1.55; color: var(--sur-sombre); }
+  :global(.chf__bouton) { align-self: flex-start; }
+</style>

@@ -1,31 +1,109 @@
-/* Base neutre du modèle : l'agent design / le chef de projet l'adapte au client.
-   Les couleurs viennent de la fiche client (variables --primaire, --fond, --texte). */
+/* Design ANAV-AJ (maquette « Refonte ANAV-AJ Narbonne »).
+   --primaire, --fond et --texte viennent de la fiche client ; les autres teintes sont celles de la maquette. */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  /* Police auto-hébergée (SIL Open Font License 1.1) : aucun appel à Google Fonts. */
+  src: url('/fonts/plus-jakarta-sans-v12-latin.woff2') format('woff2');
+}
+
+:root {
+  --primaire-fonce: #0F2A4A;
+  --texte-doux: #3B4A60;
+  --texte-pale: #4A5568;
+  --bleu-clair: #EAF1F8;
+  --vert-clair: #E3EEE8;
+  --vert-texte: #24352D;
+  --bordure: #E4E8EE;
+  --bordure-forte: #C9D3DF;
+  --accent: #F2B544;
+  --sur-sombre: #DCE4EE;
+  --pad-section: clamp(56px, 8vw, 96px);
+}
+
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body {
   margin: 0;
   background: var(--fond);
   color: var(--texte);
-  font: 17px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font: 17px/1.6 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 img { max-width: 100%; height: auto; }
 a { color: var(--primaire); }
+a:hover { color: var(--primaire-fonce); }
 :focus-visible { outline: 3px solid var(--primaire); outline-offset: 2px; }
-.container { width: min(1100px, 100% - 32px); margin-inline: auto; }
+.container { width: min(1216px, 100% - 32px); margin-inline: auto; }
 .skip { position: absolute; left: -9999px; }
 .skip:focus { left: 16px; top: 16px; background: #fff; padding: 8px 12px; z-index: 10; }
-h1, h2, h3 { line-height: 1.2; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; }
+p { text-wrap: pretty; }
 .prose { max-width: 760px; }
+.page-simple { padding-block: var(--pad-section); }
+
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 0;
   background: var(--primaire);
   color: #fff;
-  border: 0;
-  border-radius: 10px;
-  padding: 12px 22px;
   font: inherit;
+  font-size: 16px;
   font-weight: 700;
-  cursor: pointer;
+  line-height: 1.2;
   text-decoration: none;
+  cursor: pointer;
 }
-.todo { background: #ffe9c7; border: 1px dashed #d98a00; border-radius: 4px; padding: 0 4px; font-weight: 600; }
+.btn:hover { background: var(--primaire-fonce); color: #fff; }
+.btn--secondaire { background: #fff; color: var(--texte); border: 1.5px solid var(--bordure-forte); }
+.btn--secondaire:hover { background: #fff; border-color: var(--primaire); color: var(--primaire); }
+.btn--clair { background: #fff; color: var(--primaire-fonce); }
+.btn--clair:hover { background: var(--bleu-clair); color: var(--primaire-fonce); }
+
+.todo { background: #ffe9c7; color: #5c3a00; border: 1px dashed #d98a00; border-radius: 4px; padding: 0 4px; font-weight: 600; }
+
+/* --- Sections de page (src/components/sections/) ------------------------------------------- */
+.sec { background: #fff; padding-block: var(--pad-section); }
+.sec--gris { background: var(--fond); }
+.sec--bleu { background: var(--bleu-clair); }
+.sec--sombre { background: var(--primaire-fonce); color: #fff; }
+.sec__in { display: flex; flex-direction: column; gap: clamp(32px, 4vw, 48px); }
+.sec__tete { display: flex; flex-direction: column; gap: 16px; max-width: 780px; }
+.sec__tete--ligne { flex-direction: row; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px 40px; max-width: none; }
+.sec__tete--ligne > div { display: flex; flex-direction: column; gap: 12px; max-width: 680px; }
+.surtitre { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--primaire); }
+.sec--sombre .surtitre { color: var(--accent); }
+.h2 { margin: 0; font-size: clamp(30px, 4vw, 40px); line-height: 1.15; letter-spacing: -0.02em; font-weight: 800; }
+.lead, .lead p { margin: 0; font-size: 18px; line-height: 1.65; color: var(--texte-doux); }
+.lead p + p { margin-top: 16px; }
+.sec--sombre .lead, .sec--sombre .lead p { color: var(--sur-sombre); }
+.grille { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(min(var(--min, 260px), 100%), 1fr)); }
+.deux-col { display: grid; gap: clamp(32px, 5vw, 56px); grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); align-items: start; }
+.carte { background: #fff; border: 1px solid var(--bordure); border-radius: 24px; padding: clamp(24px, 3vw, 36px); display: flex; flex-direction: column; gap: 14px; }
+.sec:not(.sec--gris) .carte { background: var(--fond); border-color: transparent; }
+.carte h2, .carte h3 { margin: 0; font-size: 22px; font-weight: 700; }
+.carte p, .carte li { color: var(--texte-doux); }
+.carte p { margin: 0; font-size: 16px; line-height: 1.6; }
+.carte ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.5; }
+.sec .carte.carte--vert { background: var(--vert-clair); }
+.sec .carte.carte--vert p, .sec .carte.carte--vert li { color: var(--vert-texte); }
+.sec .carte.carte--bleu { background: var(--bleu-clair); }
+.sec .carte.carte--bleu p, .sec .carte.carte--bleu li { color: #26384F; }
+.sec .carte.carte--gris { background: var(--fond); }
+.note { margin: 0; font-size: 17px; line-height: 1.65; color: var(--texte-doux); background: var(--bleu-clair); border-radius: 18px; padding: 20px 24px; max-width: 900px; }
+.note p { margin: 0; }
+.note strong { color: var(--texte); }
+.lien-fleche { font-weight: 700; display: inline-flex; gap: 8px; align-items: center; align-self: flex-start; }
+.coches { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 16px; }
+.coches li { display: flex; gap: 14px; align-items: flex-start; font-size: 17px; line-height: 1.5; color: var(--texte); }
+.coches svg { flex: none; margin-top: 3px; }
+.photo { border-radius: 32px; background: var(--vert-clair); min-height: 420px; display: grid; place-items: center; padding: 32px; text-align: center; color: #2F4A3E; font-size: 15px; font-weight: 600; overflow: hidden; }
+.photo img { width: 100%; height: 100%; object-fit: cover; }
+.photo:has(img) { padding: 0; }

@@ -1,0 +1,32 @@
+---
+// Appel à l'action de fin de page (« Vous avez besoin d'aide ? ») : contenu commun dans content/reglages/.
+import type { CollectionEntry } from 'astro:content';
+import type { SectionDe } from '../../content.config';
+import Bouton from './Bouton.astro';
+import { enBlocs } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'appel'>;
+  appel: CollectionEntry<'reglages'>['data']['appel'];
+}
+const { s, appel } = Astro.props;
+---
+
+<section id={s.ancre || undefined} class="ap">
+  <div class="container ap__in">
+    <div class="ap__texte">
+      <h2 class="h2">{s.titre || appel.titre}</h2>
+      {(s.texte || appel.texte) && <div set:html={enBlocs(s.texte || appel.texte)} />}
+    </div>
+    <div class="ap__boutons">
+      {appel.boutons.map((b) => <Bouton bouton={b} style="clair" />)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .ap { background: var(--primaire); color: #fff; padding-block: clamp(56px, 7vw, 80px); }
+  .ap__in { display: flex; flex-wrap: wrap; gap: 32px 56px; align-items: center; justify-content: space-between; }
+  .ap__texte { display: flex; flex-direction: column; gap: 12px; max-width: 600px; }
+  .ap__texte :global(p) { margin: 0; font-size: 18px; line-height: 1.6; color: #E6EEF7; }
+  .ap__boutons { display: flex; flex-wrap: wrap; gap: 12px; }
+</style>

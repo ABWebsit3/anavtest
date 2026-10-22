@@ -1,0 +1,75 @@
+---
+// Grille de cartes : simples, numérotées (01, 02…), étapes (Étape 1…), pastel (fonds alternés) ou étiquettes.
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import { t } from '../../i18n/ui';
+import type { Langue } from '../../moyo/fiche';
+import Bouton from './Bouton.astro';
+import { enBlocs, enLigne } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'cartes'>;
+  lang: Langue;
+}
+const { s, lang } = Astro.props;
+const style = s.style ?? 'simples';
+const min = { 1: '100%', 2: '440px', 3: '320px', 4: '240px' }[s.colonnes ?? 4];
+const Titre = s.titre ? 'h3' : 'h2';
+const pastels = ['vert', 'bleu', 'gris'];
+---
+
+<Sec ancre={s.ancre} fond={s.fond}>
+  {(s.surtitre || s.titre || s.texte) && (
+    <div class="sec__tete">
+      {s.surtitre && <p class="surtitre">{s.surtitre}</p>}
+      {s.titre && <h2 class="h2">{s.titre}</h2>}
+      {s.texte && <div class="lead" set:html={enBlocs(s.texte)} />}
+    </div>
+  )}
+
+  {style === 'etiquettes' ? (
+    <ul class="grille cartes__etiquettes" style={`--min:${min}`}>
+      {s.cartes.map((c) => <li>{c.titre}</li>)}
+    </ul>
+  ) : (
+    <ol class:list={['grille', 'cartes', `cartes--${style}`]} style={`--min:${min}`} role={style === 'etapes' ? undefined : 'list'}>
+      {s.cartes.map((c, i) => (
+        <li class:list={[style !== 'etapes' && 'carte', style === 'pastel' && `carte--${pastels[i % 3]}`]}>
+          {style === 'numerotees' && <span class="cartes__num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>}
+          {style === 'etapes' && <span class="cartes__num">{t(lang).etape} {i + 1}</span>}
+          {c.surtitre && <p class="surtitre">{c.surtitre}</p>}
+          {c.titre && <Titre>{c.titre}</Titre>}
+          {c.texte && <Fragment set:html={enBlocs(c.texte)} />}
+          {c.liste.length > 0 && <ul>{c.liste.map((x) => <li set:html={enLigne(x)} />)}</ul>}
+          {c.lien?.libelle && c.lien.url && <a class="lien-fleche" href={c.lien.url}>{c.lien.libelle}</a>}
+        </li>
+      ))}
+    </ol>
+  )}
+
+  {s.note && <div class="note" set:html={enBlocs(s.note)} />}
+
+  {s.appel?.texte && (
+    <div class="cartes__appel">
+      <p>{s.appel.texte}</p>
+      <Bouton bouton={s.appel.bouton} />
+    </div>
+  )}
+</Sec>
+
+<style>
+  .cartes { margin: 0; padding: 0; list-style: none; }
+  .cartes__num { font-size: 15px; font-weight: 800; color: var(--primaire); }
+  .cartes--etapes > li { display: flex; flex-direction: column; gap: 12px; border-top: 3px solid var(--primaire); padding-top: 24px; }
+  .cartes--etapes h3, .cartes--etapes h2 { margin: 0; font-size: 21px; font-weight: 700; }
+  .cartes--etapes :global(p) { margin: 0; font-size: 16px; line-height: 1.6; color: var(--texte-doux); }
+  .cartes--pastel > li { border: 0; border-radius: 28px; padding: clamp(28px, 3.5vw, 44px); gap: 16px; }
+  .cartes--pastel h2 { font-size: clamp(24px, 2.6vw, 30px); font-weight: 800; letter-spacing: -0.02em; }
+  .cartes--pastel h3 { font-weight: 800; }
+  .cartes--pastel :global(p) { font-size: 17px; line-height: 1.7; }
+  .cartes__etiquettes { margin: 0; padding: 0; list-style: none; gap: 16px; }
+  .cartes__etiquettes li { background: #fff; border: 1px solid var(--bordure); border-radius: 18px; padding: 22px 24px; font-size: 17px; font-weight: 600; }
+  :global(.sec:not(.sec--gris)) .cartes__etiquettes li { background: var(--fond); }
+  .cartes__appel { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; background: var(--fond); border-radius: 24px; padding: 32px 36px; }
+  :global(.sec--gris) .cartes__appel { background: #fff; }
+  .cartes__appel p { margin: 0; font-size: 18px; font-weight: 700; max-width: 640px; }
+</style>

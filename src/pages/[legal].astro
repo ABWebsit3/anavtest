@@ -4,12 +4,12 @@ import LegalLayout from '../layouts/LegalLayout.astro';
 import MentionsLegales from '../legal/MentionsLegales.astro';
 import Confidentialite from '../legal/Confidentialite.astro';
 import CgvVente from '../legal/CgvVente.astro';
-import { projet } from '../moyo/site';
+import { fiche, projet } from '../moyo/site';
 
 export function getStaticPaths() {
   return [
-    { params: { legal: 'mentions-legales' }, props: { titre: 'Mentions légales', description: 'Éditeur du site, hébergeur et informations légales.' } },
-    { params: { legal: 'confidentialite' }, props: { titre: 'Politique de confidentialité', description: 'Données personnelles collectées, finalités, durées de conservation et droits.' } },
+    { params: { legal: 'mentions-legales' }, props: { titre: 'Mentions légales', description: `Mentions légales du site ${fiche.site.nom} : éditeur, directeur de la publication, hébergeur et propriété intellectuelle.` } },
+    { params: { legal: 'confidentialite' }, props: { titre: 'Politique de confidentialité', description: `Politique de confidentialité du site ${fiche.site.nom} : données personnelles collectées, finalités, durées de conservation, cookies et droits.` } },
     ...(projet.has('ecom')
       ? [{ params: { legal: 'conditions-generales-de-vente' }, props: { titre: 'Conditions générales de vente', description: 'Conditions de vente en ligne.' } }]
       : []),

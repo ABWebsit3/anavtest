@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 4321
+    },
+    {
+      "name": "cms",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:cms"
+      ],
+      "port": 4321
+    }
+  ]
+}

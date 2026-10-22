@@ -1,0 +1,17 @@
+---
+// Texte libre (paragraphes, listes, liens).
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import { enBlocs } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'texte'>;
+}
+const { s } = Astro.props;
+---
+
+<Sec ancre={s.ancre} fond={s.fond}>
+  <div class="prose">
+    {s.titre && <h2 class="h2">{s.titre}</h2>}
+    <div class="lead" set:html={enBlocs(s.texte)} />
+  </div>
+</Sec>

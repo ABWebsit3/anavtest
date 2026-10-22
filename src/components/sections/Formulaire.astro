@@ -1,0 +1,37 @@
+---
+// Formulaire de contact (inclus dans tous les forfaits) avec texte et encadré à gauche.
+import type { SectionDe } from '../../content.config';
+import type { Langue } from '../../moyo/fiche';
+import Sec from './Sec.astro';
+import ContactForm from '../ContactForm.astro';
+import { enBlocs } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'formulaire'>;
+  lang: Langue;
+}
+const { s, lang } = Astro.props;
+---
+
+<Sec ancre={s.ancre} fond={s.fond} defaut="gris">
+  <div class="deux-col">
+    <div class="sec__tete fo">
+      {s.titre && <h2 class="h2" id="cf-titre">{s.titre}</h2>}
+      {s.texte && <div class="lead" set:html={enBlocs(s.texte)} />}
+      {s.encadre?.texte && (
+        <div class="fo__encadre" role="note">
+          {s.encadre.titre && <p class="fo__encadre-titre">{s.encadre.titre}</p>}
+          <Fragment set:html={enBlocs(s.encadre.texte)} />
+        </div>
+      )}
+    </div>
+    <ContactForm lang={lang} titre={!s.titre} />
+  </div>
+</Sec>
+
+<style>
+  .fo { gap: 20px; }
+  .fo__encadre { background: #fff; border: 1px solid var(--bordure); border-radius: 20px; padding: 24px 28px; display: flex; flex-direction: column; gap: 10px; }
+  .fo__encadre :global(p) { margin: 0; font-size: 16px; line-height: 1.6; color: var(--texte-doux); }
+  .fo__encadre .fo__encadre-titre { font-size: 17px; font-weight: 700; color: var(--texte); }
+  .fo__encadre :global(a) { font-weight: 700; }
+</style>

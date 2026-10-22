@@ -6,23 +6,29 @@ import type { Langue } from '../moyo/fiche';
 
 interface Props {
   lang: Langue;
+  /** false quand la section qui l'entoure affiche déjà le titre (id « cf-titre »). */
+  titre?: boolean;
 }
-const { lang } = Astro.props;
+const { lang, titre = true } = Astro.props;
 const tx = t(lang);
 ---
 
 <section class="cf" id="contact" aria-labelledby="cf-titre">
-  <h2 id="cf-titre">{tx.contactTitre}</h2>
+  {titre && <h2 id="cf-titre">{tx.contactTitre}</h2>}
   <p class="cf__ok" role="status" hidden data-cf="ok">{tx.contactOk}</p>
   <p class="cf__err" role="alert" hidden data-cf="erreur">{tx.contactErreur}</p>
   <form method="post" action="/contact.php">
     <input type="hidden" name="retour" value={Astro.url.pathname} />
-    <label>{tx.contactNom} *<input name="nom" required maxlength="100" autocomplete="name" /></label>
-    <label>{tx.contactEmail} *<input name="email" type="email" required maxlength="254" autocomplete="email" /></label>
+    <div class="cf__ligne">
+      <label>{tx.contactNom} *<input name="nom" required maxlength="100" autocomplete="name" /></label>
+      <label>{tx.contactEmail} *<input name="email" type="email" required maxlength="254" autocomplete="email" /></label>
+    </div>
+    <label>{tx.contactTelephone}<input name="telephone" type="tel" maxlength="30" autocomplete="tel" /></label>
     <label>{tx.contactMessage} *<textarea name="message" required maxlength="5000" rows="6"></textarea></label>
     <div class="cf__hp" aria-hidden="true"><label>Site web <input name="website" tabindex="-1" autocomplete="off" /></label></div>
     <p class="cf__rgpd">{tx.contactRgpd} <a href="/confidentialite/">{tx.contactEnSavoirPlus}</a></p>
-    <button class="btn" type="submit">{tx.contactEnvoyer}</button>
+    <button class="btn cf__envoyer" type="submit">{tx.contactEnvoyer}</button>
+    <p class="cf__obligatoires">{tx.contactObligatoires}</p>
   </form>
 </section>
 
@@ -33,12 +39,17 @@ const tx = t(lang);
 </script>
 
 <style>
-  .cf { margin-top: 56px; max-width: 640px; }
-  .cf form { display: grid; gap: 14px; }
-  .cf label { display: grid; gap: 6px; font-weight: 600; }
-  .cf input, .cf textarea { font: inherit; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--texte) 35%, transparent); border-radius: 8px; background: #fff; color: #111; }
+  .cf { background: #fff; border: 1px solid var(--bordure); border-radius: 28px; padding: clamp(24px, 4vw, 40px); scroll-margin-top: 24px; }
+  .cf h2 { margin: 0 0 20px; }
+  .cf form { display: flex; flex-direction: column; gap: 20px; }
+  .cf__ligne { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 20px; }
+  .cf label { display: flex; flex-direction: column; gap: 8px; font-size: 15px; font-weight: 600; }
+  .cf input, .cf textarea { font: inherit; font-weight: 400; font-size: 16px; color: var(--texte); background: #fff; border: 1.5px solid var(--bordure-forte); border-radius: 14px; padding: 14px 16px; min-height: 52px; }
+  .cf input:focus, .cf textarea:focus { outline: 3px solid #A9C4E4; border-color: var(--primaire); }
   .cf__hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
-  .cf__rgpd { font-size: 14px; margin: 0; }
+  .cf__rgpd { font-size: 14px; line-height: 1.5; color: var(--texte-doux); margin: 0; }
+  .cf__envoyer { align-self: flex-start; }
+  .cf__obligatoires { margin: 0; font-size: 13px; color: var(--texte-pale); }
   .cf__ok { color: #12703a; font-weight: 700; }
   .cf__err { color: #b42318; font-weight: 700; }
 </style>

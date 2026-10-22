@@ -2,7 +2,7 @@
 //   node scripts/moyo-check.ts          → mode développement : les manques sont des avertissements
 //   node scripts/moyo-check.ts --prod   → mode mise en ligne : tout manque bloque (utilisé par la CI)
 // Écrit CHECKLIST.md (état lisible du projet) et complète moyo.suivi.json (tâches à cocher).
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import fiche from '../moyo.client.ts';
 import { OPTIONS, type OptionId } from '../src/moyo/catalogue.ts';
@@ -23,6 +23,9 @@ const manque = (section: string, texte: string, bloquant = false) =>
 const F = 'Fiche client';
 if (fiche.exemple) manque(F, 'La fiche contient encore les données d’exemple (exemple: true).');
 if (/exemple\.(fr|com)/.test(fiche.site.url)) manque(F, `URL du site à renseigner (actuellement ${fiche.site.url}).`);
+// Domaine provisoire (test, recette, préproduction…) : canonical, sitemap, robots.txt et llms.txt seraient faux.
+else if (/localhost|[/.-](test|tests|staging|preprod|recette|demo)[.-]/i.test(fiche.site.url))
+  manque(F, `URL du site provisoire (${fiche.site.url}) : domaine définitif à confirmer (canonical, sitemap).`);
 const e = fiche.editeur;
 const obligatoires: [string, string][] = [
   ['raisonSociale', 'Raison sociale / nom'],
@@ -70,6 +73,20 @@ else ok(P, `${pages.length}/${projet.plan.pagesMax} pages (forfait ${projet.plan
 const aCompleter = (dir: string, f: string) => /\[À compléter|TODO/i.test(readFileSync(join(dir, f), 'utf8'));
 for (const f of pages) if (aCompleter(join('content/pages', langueDefaut), f)) manque(P, `Contenu à compléter dans ${langueDefaut}/${f}.`);
 
+// --- 3 bis. Images (agent seo-technique) : pas d'image de plus de 300 Ko dans public/ -------------
+const I = 'Images';
+const lourdes: string[] = [];
+const parcourirImages = (dir: string) => {
+  for (const n of existsSync(dir) ? readdirSync(dir, { withFileTypes: true }) : []) {
+    const p = join(dir, n.name);
+    if (n.isDirectory()) parcourirImages(p);
+    else if (/\.(jpe?g|png|webp|avif|gif|svg)$/i.test(n.name) && statSync(p).size > 300 * 1024) lourdes.push(`${p} (${Math.round(statSync(p).size / 1024)} Ko)`);
+  }
+};
+parcourirImages('public');
+if (lourdes.length) manque(I, `Image(s) de plus de 300 Ko à compresser (WebP conseillé) : ${lourdes.join(', ')}.`);
+else ok(I, 'Aucune image de plus de 300 Ko dans public/.');
+
 // --- 4. Articles SEO ----------------------------------------------------------------------------
 const A = 'Articles SEO';
 const articles = lister(join('content/articles', langueDefaut));
@@ -99,7 +116,11 @@ const besoins: Partial<Record<OptionId, () => string | null>> = {
   news: () => (fiche.prestataires.newsletter ? null : 'prestataires.newsletter à renseigner (confidentialité).'),
   feed: () => (fiche.prestataires.reseauxSociaux ? null : 'prestataires.reseauxSociaux à renseigner (confidentialité).'),
   chat: () => (fiche.prestataires.reseauxSociaux ? null : 'prestataires.reseauxSociaux à renseigner (confidentialité).'),
-  ana: () => (!PROD || process.env.PUBLIC_GA4_ID ? null : 'variable PUBLIC_GA4_ID absente (secret GitHub).'),
+  ana: () =>
+    [
+      fiche.ga4Conservation ? '' : 'ga4Conservation à renseigner (« 2 mois » ou « 14 mois », réglage de la propriété GA4 : confidentialité).',
+      !PROD || process.env.PUBLIC_GA4_ID ? '' : 'variable PUBLIC_GA4_ID absente (secret GitHub).',
+    ].filter(Boolean).join(' ') || null,
 };
 for (const id of projet.actives) {
   const probleme = besoins[id]?.();

@@ -1,0 +1,68 @@
+---
+// Deux colonnes : texte à gauche (titre, paragraphes, encadré, lien) ; à droite une photo, un texte ou des listes.
+import type { SectionDe } from '../../content.config';
+import Sec from './Sec.astro';
+import Photo from './Photo.astro';
+import Icone from '../Icone.astro';
+import { enBlocs, enLigne } from '../../moyo/texte';
+interface Props {
+  s: SectionDe<'colonnes'>;
+}
+const { s } = Astro.props;
+const sombre = s.fond === 'sombre';
+---
+
+<Sec ancre={s.ancre} fond={s.fond} class="col">
+  <div class:list={['deux-col', (s.image || s.consignePhoto) && 'col--photo']}>
+    <div class="col__gauche">
+      {s.surtitre && <p class="surtitre">{s.surtitre}</p>}
+      <h2 class="h2">{s.titre}</h2>
+      {s.sousTitre && <p class="col__sous-titre">{s.sousTitre}</p>}
+      {s.texte && <div class="lead col__texte" set:html={enBlocs(s.texte)} />}
+      {s.encadre?.texte && (
+        <div class="col__encadre">
+          {s.encadre.titre && <p class="col__encadre-titre">{s.encadre.titre}</p>}
+          <Fragment set:html={enBlocs(s.encadre.texte)} />
+        </div>
+      )}
+      {s.lien?.libelle && s.lien.url && <a class="lien-fleche" href={s.lien.url}>{s.lien.libelle}<Icone nom="fleche" /></a>}
+    </div>
+
+    <div class="col__droite">
+      <Photo image={s.image} alt={s.imageAlt} consigne={s.consignePhoto} />
+      {s.texteDroite && <div class:list={['lead', sombre && 'col__texte-droite']} set:html={enBlocs(s.texteDroite)} />}
+      {s.listes.length > 0 && (
+        <div class:list={['col__listes', s.listes.length > 1 && 'col__listes--multi']}>
+          {s.listes.map((l) => (
+            <div class:list={['carte', l.coches && 'col__liste-coches']}>
+              {l.titre && <h3>{l.titre}</h3>}
+              {l.coches
+                ? <ul class="coches">{l.items.map((x) => <li><Icone nom="coche" taille={20} couleur="var(--primaire)" /><span set:html={enLigne(x)} /></li>)}</ul>
+                : <ul>{l.items.map((x) => <li set:html={enLigne(x)} />)}</ul>}
+            </div>
+          ))}
+        </div>
+      )}
+      {s.noteDroite && <div class="col__note" set:html={enBlocs(s.noteDroite)} />}
+    </div>
+  </div>
+</Sec>
+
+<style>
+  .col--photo { align-items: center; }
+  .col__gauche, .col__droite { display: flex; flex-direction: column; gap: 20px; }
+  .col__gauche { gap: 20px; }
+  .col__sous-titre { margin: -4px 0 0; font-size: 16px; color: var(--sur-sombre); }
+  .col__texte :global(p) { line-height: 1.7; }
+  .col__texte-droite :global(p) { color: var(--sur-sombre); line-height: 1.7; }
+  .col__encadre { background: #fff; border: 1px solid var(--bordure); border-radius: 20px; padding: 24px 28px; display: flex; flex-direction: column; gap: 8px; }
+  .col__encadre :global(p) { margin: 0; font-size: 16px; line-height: 1.6; color: var(--texte-doux); }
+  .col__encadre .col__encadre-titre { font-size: 17px; font-weight: 700; color: var(--texte); }
+  :global(.sec:not(.sec--gris)) .col__encadre { background: var(--bleu-clair); border-color: transparent; }
+  .col__listes { display: grid; gap: 20px; }
+  .col__listes--multi { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
+  .col__listes .carte { border-radius: 24px; padding: clamp(28px, 3vw, 40px); gap: 18px; }
+  .col__listes h3 { font-size: 20px; }
+  .col__liste-coches h3 { font-weight: 800; }
+  .col__note :global(p) { margin: 0; font-size: 15px; color: var(--texte-pale); }
+</style>

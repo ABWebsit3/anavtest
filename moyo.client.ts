@@ -4,7 +4,7 @@
 import { defineClient } from './src/moyo/fiche.ts';
 
 export default defineClient({
-  exemple: true, // ← passer à false une fois la fiche remplie avec les vraies données du client
+  exemple: false, // ← passer à false une fois la fiche remplie avec les vraies données du client
 
   forfait: 'pro', // 'starter' (Essentielle) | 'pro' (Standard) | 'elite' (Premium)
   engagement: true,
@@ -12,26 +12,28 @@ export default defineClient({
   articlesSeoAchetes: 0,
 
   site: {
-    nom: 'Atelier Exemple',
-    url: 'https://www.exemple.fr',
-    langues: ['fr', 'en'],
-    description: 'Site d’exemple du modèle Moyo (client fictif).',
-    couleurs: { primaire: '#8A4FFF', fond: '#FFFBF4', texte: '#17131F' },
+    nom: 'ANAV-AJ',
+    url: 'https://www.anav-test.fr',
+    langues: ['fr'],
+    description: 'Association d’aide aux victimes d’infractions pénales à Narbonne : accueil gratuit et confidentiel, accompagnement juridique, social et psychologique.',
+    couleurs: { primaire: '#1D4E89', fond: '#F7F8F6', texte: '#14213D' },
+    typeSchema: 'NGO', // association loi 1901 : schema.org/NGO (sous-type d'Organization), voir agent seo-technique
   },
 
   editeur: {
-    raisonSociale: 'Atelier Exemple',
-    nomCommercial: '',
-    formeJuridique: '',
+    // Repris de la maquette fournie (pied de page, page Contact) : à confirmer par le client.
+    raisonSociale: 'Association Narbonnaise d’Aide aux Victimes d’Infractions Pénales et Actions de Justice',
+    nomCommercial: 'ANAV-AJ',
+    formeJuridique: 'Association loi 1901',
     representant: '',
-    adresse: '',
+    adresse: 'Espace Maraussan, 56 route de Lunes, 11100 Narbonne',
     siren: '',
     siret: '',
     immatriculation: '',
     capital: '',
     tvaIntracom: '',
-    telephone: '',
-    email: 'contact@exemple.fr',
+    telephone: '04 68 41 40 97',
+    email: 'anav2@wanadoo.fr',
     directeurPublication: '',
   },
 
@@ -41,9 +43,12 @@ export default defineClient({
   // Option e-commerce (Snipcart) uniquement. Produits : content/produits/<langue>/<produit>.md
   boutique: { devise: 'EUR', mentionPrix: '' },
 
-  contactEmail: 'contact@exemple.fr',
+  contactEmail: 'anav2@wanadoo.fr',
 
   prestataires: {},
+
+  // Option Analytics : '2 mois' ou '14 mois', une fois la conservation réglée dans la propriété GA4 du client.
+  ga4Conservation: '',
 
   dateMiseAJourLegale: '',
 });

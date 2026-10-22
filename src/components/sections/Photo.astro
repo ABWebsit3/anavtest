@@ -1,0 +1,16 @@
+---
+// Photo d'une section, ou consigne « [À compléter : photo …] » tant que le client ne l'a pas fournie.
+interface Props {
+  image?: string | null;
+  alt?: string | null;
+  consigne?: string | null;
+  class?: string;
+}
+const { image, alt, consigne, class: classe } = Astro.props;
+---
+
+{(image || consigne) && (
+  <div class:list={['photo', classe]}>
+    {image ? <img src={image} alt={alt ?? ''} loading="lazy" /> : <mark class="todo">[À compléter : photo — {consigne}]</mark>}
+  </div>
+)}
